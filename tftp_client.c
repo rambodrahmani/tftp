@@ -1,6 +1,6 @@
 /**
  * File: tftp_client.c
- *       TFTP Client.
+ *       TFTP Client Source File.
  * 
  * Author: Rambod Rahmani <rambodrahmani@autistici.org>
  *         Created on 21/10/2019.

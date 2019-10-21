@@ -1,6 +1,6 @@
 /**
- * File: tftp_server.c
- *       TFTP Server Source File.
+ * File: tftp_client.h
+ *       TFTP Client Header File.
  * 
  * Author: Rambod Rahmani <rambodrahmani@autistici.org>
  *         Created on 21/10/2019.
