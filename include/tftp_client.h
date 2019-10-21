@@ -6,16 +6,10 @@
  *         Created on 21/10/2019.
  */
 
-/**
- * Entry point.
- *
- * @param  argc  command line arguments counter.
- * @param  argv  command line arguments.
- *
- * @return       execution exit code.
- */
-int main(int argc, char * argv[])
-{
-    return 0;
-}
+#ifndef TFTP_CLIENT
+#define TFTP_CLIENT
+
+#include <stdio.h>
+
+#endif
 

@@ -6,6 +6,8 @@
  *         Created on 21/10/2019.
  */
 
+#include "../include/tftp_client.h"
+
 /**
  * Entry point.
  *
