@@ -10,12 +10,34 @@
 #define TFTP_SERVER
 
 #include <stdio.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <dirent.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+
+/**
+ * Available type for log messages.
+ */
+typedef enum
+{
+    INFO,       // info log message
+    ERROR       // error log message
+} LogType;
+
+/**
+ * Prints a log message having the given type with the given text message. Based
+ * on the given type, a different output stream is used. The new line character
+ * is automatically added after the log message.
+ *
+ * @param  type     the type of the log message;
+ * @param  message  the text of the log message.
+ */
+void print_log(LogType type, const char * message);
 
 /**
  * Creates a listener socket having domain AF_INET and type SOCK_DGRAM on the

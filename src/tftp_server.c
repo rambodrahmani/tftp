@@ -13,6 +13,11 @@
 
 #include "../include/tftp_server.h"
 
+void receive_packets(int socket)
+{
+
+}
+
 int createUDPSocket(int port)
 {
     // socket to be returned
@@ -53,9 +58,23 @@ int createUDPSocket(int port)
     return sockfd;
 }
 
-void receive_packets(int socket)
+void print_log(LogType type, const char *message)
 {
+    // check the given type
+    switch(type)
+    {
+        case INFO:
+            {
+                fprintf(stdout, "> %s \n", message);
+                break;
+            }
 
+        case ERROR:
+            {
+                fprintf(stderr, "!> %s \n", message);
+                break;
+            }
+    }
 }
 
 /**
@@ -72,8 +91,9 @@ int main(int argc, char * argv[])
     if (argc != 3)
     {
         // if so, print a warning error message
-        fprintf(stderr, "Invalid number of arguments.\n"
-                        "Usage: tftp_server <port> <base directory>.\n");
+        print_log(ERROR, "Invalid number of arguments."
+                         " Usage: tftp_server <port> <base directory>."
+                         " Quitting.");
 
         // return with errors
         return -1;
@@ -82,8 +102,50 @@ int main(int argc, char * argv[])
     // set listener server port
     int port = atoi(argv[1]);
 
+    // check if the given port need root privileges
+    if (port < 1024)
+    {
+        // check if the user has root privileges
+        if (geteuid() != 0)
+        {
+            // if not, print a warning error message
+            print_log(ERROR, "Invalid port number. To use ports lower than 1024"
+                             " root privileges are needed. Quitting.");
+
+            // and quit
+            return -1;
+        }
+    }
+
+    // check if the given directory path is valid
+    DIR* dir = opendir(argv[2]);
+    if (dir)
+    {
+        // directory correctly opened, it exists, just close it
+        closedir(dir);
+    }
+    else if (ENOENT == errno)
+    {
+        // could not open the directory, it does not exist
+        print_log(ERROR, "The provided directory path is not valid. Please"
+                         " provide the path to an existing directory."
+                         " Quitting.");
+
+        // return with errors
+        return -1;
+    }
+    else
+    {
+        // opendir() failed for other reasons
+        print_log(ERROR, "An unexpected error happened while opening the"
+                         " provided directory. Quitting.");
+    }
+
     // create listener UDP server
     int listener = createUDPSocket(port);
+
+    // start main loop
+    receive_packets(listener);
 
     // return with no errors
     return 0;
