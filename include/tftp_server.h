@@ -45,7 +45,7 @@ void print_log(LogType type, const char * message);
  *
  * @param  port  server socket port;
  *
- * @return       the created UDP socket.
+ * @return       the created UDP socket or < 0 in case of error.
  */
 int createUDPSocket(int port);
 

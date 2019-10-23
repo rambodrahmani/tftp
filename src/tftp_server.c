@@ -13,51 +13,6 @@
 
 #include "../include/tftp_server.h"
 
-void receive_packets(int socket)
-{
-
-}
-
-int createUDPSocket(int port)
-{
-    // socket to be returned
-    int sockfd;
-
-    // server address
-    struct sockaddr_in serv_addr;
-
-    // create IPv4 UDP unbound socket
-    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-
-    // check if the socket was correctly created
-    if (sockfd < 0)
-    {
-        // if not, print a warning error message
-        fprintf(stdout, "Error while creating listener socket.");
-
-        // return with errors
-        return -1;
-    }
-
-    // zero out server address struct
-    memset(&serv_addr, 0, sizeof(serv_addr));
-
-    // fill server address struct: use IPv4 address family
-    serv_addr.sin_family = AF_INET;
-
-    // bind to all local interfaces
-    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-
-    // set network port: port numbers below 1024 are privileged ports
-    serv_addr.sin_port = htons(port);
-
-    //
-    int bound = bind(sockfd,(struct sockaddr*)&serv_addr,sizeof(serv_addr));
-
-    // return the initialized socket
-    return sockfd;
-}
-
 void print_log(LogType type, const char *message)
 {
     // check the given type
@@ -74,6 +29,61 @@ void print_log(LogType type, const char *message)
                 fprintf(stderr, "!> %s \n", message);
                 break;
             }
+    }
+}
+
+int createUDPSocket(int port)
+{
+    // socket to be returned
+    int sockfd;
+
+    // server address
+    struct sockaddr_in serv_addr;
+
+    // create IPv4 UDP unbound socket
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    // check if the socket was correctly created
+    if (sockfd < 0)
+    {
+        // return with errors
+        return -1;
+    }
+
+    // zero out server address struct
+    memset(&serv_addr, 0, sizeof(serv_addr));
+
+    // fill server address struct: use IPv4 address family
+    serv_addr.sin_family = AF_INET;
+
+    // bind to all local interfaces
+    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    // set network port: port numbers below 1024 are privileged ports
+    serv_addr.sin_port = htons(port);
+
+    // associate the socket with its local address
+    int bound = bind(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+
+    // check if the socket bound succeeded
+    if (bound < 0)
+    {        
+        // return with errors
+        return -1;
+    }
+
+    // server socket successfully started, print connection parameters
+    print_log(INFO, "TFTP Server successfully started.");
+
+    // return the initialized socket
+    return sockfd;
+}
+
+void receive_packets(int socket)
+{
+    // infinite loop
+    while(1)
+    {
     }
 }
 
@@ -143,6 +153,16 @@ int main(int argc, char * argv[])
 
     // create listener UDP server
     int listener = createUDPSocket(port);
+
+    // check if the listener socket was correctly created
+    if (listener < 0)
+    {
+        // if not, print a warning log message
+        print_log(ERROR, "Error while creating listener socket. Quitting.");
+
+        // return with errors
+        return -1;
+    }
 
     // start main loop
     receive_packets(listener);
