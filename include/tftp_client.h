@@ -24,7 +24,12 @@ char *server_ip;
 /**
  * TFTP Server Port.
  */
-int      server_port;
+int server_port;
+
+/**
+ * TFTP Transfer Mode.
+ */
+char transfer_mode[3];
 
 /**
  * Implements the execution main loop.

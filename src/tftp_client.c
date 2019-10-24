@@ -10,6 +10,7 @@
 
 void main_loop()
 {
+    // input command
     char command[1024];
 
     // print help menu
@@ -22,18 +23,28 @@ void main_loop()
         scanf("%1023s", command);
 
         // HELP
-        if(strncmp(command, "!help", 5) == 00)
+        if (strncmp(command, "!help", 5) == 00)
         {
             // print help menu
             print_help_menu();
         }
 
         // MODE
+        if (strncmp(command, "!mode", 5) == 0)
+        {
+            // retrieve transfer mode from input command
+            char *mode;
+            strncpy(mode, &command+2, 3);
+            //transfer_mode = mode;
+            print_log(INFO, mode);
+        }
 
         // GET
+        if (strncmp(command, "!get", 4) == 0)
+        {}
 
         // QUIT
-        if(strncmp(command, "!quit", 5) == 00)
+        if (strncmp(command, "!quit", 5) == 00)
         {
             // print an info log message
             print_log(INFO, "Quitting TFTP Client as requested.");
