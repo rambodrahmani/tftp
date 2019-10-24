@@ -75,12 +75,27 @@ int createUDPSocket(int port)
     // server socket successfully started, print connection parameters
     print_log(INFO, "TFTP Server successfully started.");
 
+    // retrieve and print server formatted IP address xxx.xxx.xxx.xxx
+    char ip[17];
+    inet_ntop(serv_addr.sin_family, (void *)&serv_addr.sin_addr, ip, sizeof(ip));
+
+    // prepare log message string
+    char log_message[30];
+    sprintf(log_message, "Server IP: %s", ip);
+    print_log(INFO, log_message);
+
+    // retrieve and print server formatted port
+    sprintf(log_message, "Server Port: %d", ntohs(serv_addr.sin_port));
+    print_log(INFO, log_message);
+
     // return the initialized socket
     return sockfd;
 }
 
 void receive_packets(int socket)
 {
+    print_log(INFO, "Main listener loop started.");
+
     // infinite loop
     while(1)
     {

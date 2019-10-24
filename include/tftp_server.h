@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <sys/types.h>
+#include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
