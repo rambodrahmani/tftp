@@ -21,6 +21,13 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
+#include "common.h"
+
+/**
+ * TFTP Server Base Directory.
+ */
+char *base_dir;
+
 /**
  * Creates a listener socket having domain AF_INET and type SOCK_DGRAM on the
  * given port and binds it to the address and port specified.
@@ -37,7 +44,7 @@ int createUDPSocket(int port);
  *
  * @param  socket  the UDP socket to be used to listen for incoming packets.
  */
-void receive_packets(int socket);
+void listen_for_packets(int socket);
 
 #endif
 

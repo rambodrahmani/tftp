@@ -12,7 +12,6 @@
  */
 
 #include "../include/tftp_server.h"
-#include "../include/common.h"
 
 int createUDPSocket(int port)
 {
@@ -70,11 +69,15 @@ int createUDPSocket(int port)
     sprintf(log_message, "Server Port: %d", ntohs(serv_addr.sin_port));
     print_log(INFO, log_message);
 
+    // print base directory
+    sprintf(log_message, "Base directory: %s", base_dir);
+    print_log(INFO, log_message);
+
     // return the initialized socket
     return sockfd;
 }
 
-void receive_packets(int socket)
+void listen_for_packets(int socket)
 {
     // print info log message
     print_log(INFO, "Main listener loop started.");
@@ -187,6 +190,9 @@ int main(int argc, char * argv[])
     {
         // directory correctly opened, it exists, just close it
         closedir(dir);
+
+        // set tftp server base directory
+        base_dir = argv[2];
     }
     else if (ENOENT == errno)
     {
@@ -219,7 +225,7 @@ int main(int argc, char * argv[])
     }
 
     // start main loop
-    receive_packets(listener);
+    listen_for_packets(listener);
 
     // return with no errors
     return 0;
