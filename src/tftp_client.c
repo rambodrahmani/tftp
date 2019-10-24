@@ -22,35 +22,58 @@ void main_loop()
         // read command from stdin
         scanf("%1023s", command);
 
-        // HELP
-        if (strncmp(command, "!help", 5) == 00)
+        if (strncmp(command, "!help", 5) == 0)          // HELP
         {
             // print help menu
             print_help_menu();
-        }
 
-        // MODE
-        if (strncmp(command, "!mode", 5) == 0)
+        }
+        else if (strncmp(command, "!mode", 5) == 0)     // MODE
         {
-            // retrieve transfer mode from input command
-            char *mode;
-            strncpy(mode, &command+2, 3);
-            //transfer_mode = mode;
-            print_log(INFO, mode);
+            // retrieve transfer mode from stdin
+            scanf("%s", command);
+
+            // check if the provided mode is valid
+            if ((strncmp(command, "bin", 3) == 0) || 
+                (strncmp(command, "txt", 3) == 0))
+            {
+                // store transfer mode
+                strncpy(transfer_mode, command, 3);
+
+                // prepare log message
+                char log_message[33];
+                sprintf(log_message, "Transfer mode set correctly: %s.",
+                transfer_mode);
+
+                // print log message
+                print_log(INFO, log_message);
+            }
+            else
+            {
+                print_log(ERROR, "Invalid transfer mode. Only txt and bin modes"
+                                 " are available options.");
+            }
+
+            // print prompt char and wait for a new command
+            print_prompt();
         }
-
-        // GET
-        if (strncmp(command, "!get", 4) == 0)
+        else if (strncmp(command, "!get", 4) == 0)       // GET
         {}
-
-        // QUIT
-        if (strncmp(command, "!quit", 5) == 00)
+        else if (strncmp(command, "!quit", 5) == 0)      // QUIT
         {
             // print an info log message
             print_log(INFO, "Quitting TFTP Client as requested.");
 
             // exit infinite while loop
             break;
+        }
+        else                                            // INVALID COMMAND
+        {
+            // print a warning error message
+            print_log(ERROR, "Invalid command.");
+
+            // print the prompt char and wait for a new command
+            print_prompt();
         }
     }
 }
@@ -64,6 +87,15 @@ void print_help_menu()
                     "<src> from the server and saves it as <dst>.\n"
                     "   !quit\t\tQuit and close the client.\n"
                     "   !help\t\tPrint this help menu.\n");
+
+    // print the prompt char and wait for a new command
+    print_prompt();
+}
+
+void print_prompt()
+{
+    // print the prompt character to the stdout
+    fprintf(stdout, "\n> ");
 }
 
 /**

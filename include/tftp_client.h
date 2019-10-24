@@ -41,5 +41,10 @@ void main_loop();
  */
 void print_help_menu();
 
+/**
+ * Prints the prompt character on a new line.
+ */
+void print_prompt();
+
 #endif
 
