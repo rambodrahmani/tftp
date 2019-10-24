@@ -94,11 +94,68 @@ int createUDPSocket(int port)
 
 void receive_packets(int socket)
 {
+    // print info log message
     print_log(INFO, "Main listener loop started.");
+
+    // incoming client socket address
+    struct sockaddr cli_addr;
+
+    // client address length
+    size_t cli_size = sizeof(cli_addr);
+
+    // received message length
+    int recv_len;
+
+    // incoming message buffer
+    char buffer[BUFSIZE];
+
+    // received file name
+    char file_name[32];
+
+    // received transfer mode
+    char mode[32];
+
+    // received opcode
+    uint16_t opcode;
+
+    // file block number
+    uint16_t block_number;
+
+    // 
+    pid_t fork_id;
 
     // infinite loop
     while(1)
     {
+        // clean the buffer
+        memset(buffer, 0, BUFSIZE);
+
+        // recieve the data
+        recv_len = recvfrom(socket, (char *)buffer, BUFSIZE, MSG_WAITALL,
+                            &cli_addr, (socklen_t *)&cli_size);
+
+        // check for errors
+        if (recv_len <= 0)
+        {
+            // errors occurred, print a warning error message
+            print_log(ERROR, "Error while receiving incoming packet.");
+
+            // quit with errors
+            exit(-1);
+        }
+
+
+        // retrieve opcode
+        memcpy(&opcode, (uint16_t*)&buffer, 2);
+        opcode = ntohs(opcode);
+
+        // retrieve file name
+        strcpy(file_name, buffer + 2);
+
+        // retrieve transfer mode
+        strcpy(mode, buffer + 3 + strlen(file_name));
+
+        printf("Received opcode %d, file name %s and mode %s\n", opcode, file_name, mode);
     }
 }
 

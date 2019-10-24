@@ -22,6 +22,11 @@
 #include <sys/socket.h>
 
 /**
+ * Maximum incoming buffer size.
+ */
+#define BUFSIZE 1024
+
+/**
  * Available type for log messages.
  */
 typedef enum
