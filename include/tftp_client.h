@@ -6,8 +6,8 @@
  *         Created on 21/10/2019.
  */
 
-#ifndef TFTP_CLIENT
-#define TFTP_CLIENT
+#ifndef TFTP_CLIENT_H
+#define TFTP_CLIENT_H
 
 #include <stdio.h>
 

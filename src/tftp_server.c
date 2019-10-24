@@ -12,25 +12,7 @@
  */
 
 #include "../include/tftp_server.h"
-
-void print_log(LogType type, const char *message)
-{
-    // check the given type
-    switch(type)
-    {
-        case INFO:
-            {
-                fprintf(stdout, "> %s \n", message);
-                break;
-            }
-
-        case ERROR:
-            {
-                fprintf(stderr, "!> %s \n", message);
-                break;
-            }
-    }
-}
+#include "../include/common.h"
 
 int createUDPSocket(int port)
 {
