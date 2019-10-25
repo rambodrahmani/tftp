@@ -13,6 +13,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <dirent.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 #include "common.h"
 
@@ -27,9 +32,14 @@ char *server_ip;
 int server_port;
 
 /**
+ * TFTP Server Address Struct.
+ */
+struct sockaddr_in serv_addr;
+
+/**
  * TFTP Transfer Mode.
  */
-char transfer_mode[3];
+char transfer_mode[4];
 
 /**
  * Implements the execution main loop.
@@ -45,6 +55,11 @@ void print_help_menu();
  * Prints the prompt character on a new line.
  */
 void print_prompt();
+
+/**
+ * Sets the transfer mode based on the given input command.
+ */
+void set_transfer_mode();
 
 #endif
 

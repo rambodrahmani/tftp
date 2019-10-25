@@ -30,35 +30,16 @@ void main_loop()
         }
         else if (strncmp(command, "!mode", 5) == 0)     // MODE
         {
-            // retrieve transfer mode from stdin
-            scanf("%s", command);
-
-            // check if the provided mode is valid
-            if ((strncmp(command, "bin", 3) == 0) || 
-                (strncmp(command, "txt", 3) == 0))
-            {
-                // store transfer mode
-                strncpy(transfer_mode, command, 3);
-
-                // prepare log message
-                char log_message[33];
-                sprintf(log_message, "Transfer mode set correctly: %s.",
-                transfer_mode);
-
-                // print log message
-                print_log(INFO, log_message);
-            }
-            else
-            {
-                print_log(ERROR, "Invalid transfer mode. Only txt and bin modes"
-                                 " are available options.");
-            }
+            // retrieve and set new transfer mode
+            set_transfer_mode();
 
             // print prompt char and wait for a new command
             print_prompt();
         }
         else if (strncmp(command, "!get", 4) == 0)       // GET
-        {}
+        {
+
+        }
         else if (strncmp(command, "!quit", 5) == 0)      // QUIT
         {
             // print an info log message
@@ -96,6 +77,34 @@ void print_prompt()
 {
     // print the prompt character to the stdout
     fprintf(stdout, "\n> ");
+}
+
+void set_transfer_mode()
+{
+    char mode[1024];
+
+    // retrieve transfer mode from stdin
+    scanf("%s", mode);
+
+    // check if the provided mode is valid
+    if ((strncmp(mode, "bin", 3) == 0) || (strncmp(mode, "txt", 3) == 0))
+    {
+        // store transfer mode
+        strncpy(transfer_mode, mode, 3);
+
+        // prepare log message
+        char log_message[34];
+        sprintf(log_message, "Transfer mode set correctly: %s.",
+        transfer_mode);
+
+        // print log message
+        print_log(INFO, log_message);
+    }
+    else
+    {
+        print_log(ERROR, "Invalid transfer mode. Only txt and bin modes are "
+                         "available options.");
+    }
 }
 
 /**
@@ -140,6 +149,18 @@ int main(int argc, char * argv[])
             return -1;
         }
     }
+
+    // set defaultr transfer mode.
+    strcpy(transfer_mode, "bin");
+
+    // fill in tftp server address struct: use IPv4 address family
+    serv_addr.sin_family = AF_NET;
+
+    // set network address
+    inet_pton(AF_INET, server_ip, &servaddr.sin_addr);
+
+    // set network port: port numbers below 1024 are privileged ports
+    serv_add.sin_port = htons(port);
 
     // start main loop
     main_loop();
