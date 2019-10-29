@@ -48,7 +48,7 @@ int createUDPSocket(int port)
 
     // check if the socket bound succeeded
     if (bound < 0)
-    {        
+    {
         // return with errors
         return -1;
     }
@@ -61,7 +61,6 @@ int createUDPSocket(int port)
     inet_ntop(serv_addr.sin_family, (void *)&serv_addr.sin_addr, ip, sizeof(ip));
 
     // prepare log message string
-    char log_message[30];
     sprintf(log_message, "Server IP: %s", ip);
     print_log(INFO, log_message);
 
@@ -103,7 +102,7 @@ void listen_for_packets(int socket)
     // received opcode
     uint16_t opcode;
 
-    // file block number
+    // file transfer block number
     uint16_t block_number;
 
     // 
@@ -123,12 +122,12 @@ void listen_for_packets(int socket)
         if (recv_len <= 0)
         {
             // errors occurred, print a warning error message
-            print_log(ERROR, "Error while receiving incoming packet.");
+            sprintf(log_message, "Error while sending ERROR message: %d", errno);
+            print_log(ERROR, log_message);
 
             // quit with errors
             exit(-1);
         }
-
 
         // retrieve opcode
         memcpy(&opcode, (uint16_t*)&buffer, 2);
@@ -140,8 +139,77 @@ void listen_for_packets(int socket)
         // retrieve transfer mode
         strcpy(mode, buffer + 3 + strlen(file_name));
 
-        printf("Received opcode %d, file name %s and mode %s\n", opcode, file_name, mode);
+        // log received message info
+        sprintf(log_message, "Received opcode: %d, file name: %s and mode: %s.",
+                              opcode, file_name, mode);
+        print_log(INFO, log_message);
+
+        // the only valid opcode at this point is 1 (RRQ)
+        if (opcode != 1)
+        {
+            // print a warning error message
+            sprintf(log_message, "Received invalid opcode: %d.", opcode);
+            print_log(ERROR, log_message);
+
+            // handle invalid opcode received
+            handle_invalid_opcode(socket, cli_addr);
+        }
     }
+}
+
+void handle_invalid_opcode(int sockfd, struct sockaddr cli_addr)
+{
+    // terminating end string
+    uint8_t end_string = 0;
+
+    // response message buffer
+    char buffer[BUFSIZE];
+
+    // response message error message text
+    char error_message[512];
+
+    // set opcode (ERROR = 5)
+    uint16_t opcode = htons(5);
+
+    // set error code (4 = Illegal TFTP operation)
+    uint16_t error_code = htons(4);
+
+    // copy opcode to the transfer buffer
+    memcpy(buffer, &opcode, 2);
+
+    // copy error code to the transfer buffer
+    memcpy(buffer + 2, &error_code, 2);
+
+    // set error message text
+    strcpy(error_message, "Illegal TFTP operation");
+
+    // copy error message to the tranfer buffer
+    strcpy(buffer + 2, error_message);
+
+    // add final terminating end string to the buffer
+    memcpy(buffer + strlen(error_message) + 2, &end_string, 1);
+    
+    // send error message to the TFTP client
+    int sent_len = sendto(sockfd,
+                          buffer,
+                          strlen(error_message) + 4,
+                          MSG_CONFIRM,
+                          (const struct sockaddr *) &cli_addr,
+                          sizeof(cli_addr));
+
+    // check for errors
+    if (sent_len <= 0)
+    {
+        // errors occurred, print a warning error message
+        sprintf(log_message, "Error while sending ERROR message: %d", errno);
+        print_log(ERROR, log_message);
+
+        // quit with errors
+        exit(-1);
+    }
+
+    // error message correctly sent
+    print_log(INFO, "Error message correctly sent.");
 }
 
 /**

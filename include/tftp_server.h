@@ -23,6 +23,11 @@
 #include "common.h"
 
 /**
+ * Char array used for formatted log messages.
+ */
+char log_message[1024];
+
+/**
  * TFTP Server Base Directory.
  */
 char *base_dir;
@@ -44,6 +49,16 @@ int createUDPSocket(int port);
  * @param  socket  the UDP socket to be used to listen for incoming packets.
  */
 void listen_for_packets(int socket);
+
+/**
+ * Handles invalid opcodes received from the TFTP Client. An error message
+ * (opcode = 5) is sent to the client for illegal TFTP operation (error code =
+ * 4).
+ *
+ * @param  sockfd    the socket to be used to send the Error Message.
+ * @param  cli_addr  TFTP Client socket address.
+ */
+void handle_invalid_opcode(int sockfd, struct sockaddr cli_addr);
 
 #endif
 

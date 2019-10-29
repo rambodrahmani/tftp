@@ -38,7 +38,11 @@ void main_loop()
         }
         else if (strncmp(command, "!get", 4) == 0)       // GET
         {
+            // retrieve get parameters and transfer file
+            get_file();
 
+            // print promp char and wait for a new command
+            print_prompt();
         }
         else if (strncmp(command, "!quit", 5) == 0)      // QUIT
         {
@@ -93,18 +97,144 @@ void set_transfer_mode()
         strncpy(transfer_mode, mode, 3);
 
         // prepare log message
-        char log_message[34];
         sprintf(log_message, "Transfer mode set correctly: %s.",
-        transfer_mode);
+                              transfer_mode);
 
         // print log message
         print_log(INFO, log_message);
     }
     else
     {
+        // print a warning error log message: invalid transfer mode provided
         print_log(ERROR, "Invalid transfer mode. Only txt and bin modes are "
                          "available options.");
     }
+}
+
+void get_file()
+{
+    // transfer source file
+    char source[512];
+
+    // transfer destination file
+    char dest[512];
+
+    // server response opcode
+    int opcode;
+
+    // retrieve source file name
+    scanf("%s", source);
+
+    // retrieve destination file name
+    scanf("%s", dest);
+
+    // print info log message
+    sprintf(log_message, "Requesting %s from the TFTP Server.", source);
+    print_log(INFO, log_message);
+
+    // send RRQ request
+    send_RRQ(source);
+
+    // TFTP Server response buffer
+    char buffer[BUFSIZE];
+
+    // retrieve server address length
+    int addr_len = sizeof(serv_addr);
+
+    // receive response from TFTP Server
+    int recv_len = recvfrom(cli_socket,
+                            (char *)buffer,
+                            BUFSIZE,
+                            MSG_WAITALL,
+                            (struct sockaddr *) &serv_addr,
+                            (socklen_t *)& addr_len);
+
+    // check for errors
+    if (recv_len <= 0)
+    {
+        // errors occurred, print a warning error message
+        sprintf(log_message, "Error while receiving server response: %d", errno);
+        print_log(ERROR, log_message);
+
+        // quit with errors
+        exit(-1);
+    }
+
+    // retrieve server response opcode
+    memcpy(&opcode, (uint16_t*)&buffer, 2);
+    opcode = ntohs(opcode);
+
+    // check the opcode
+    if (opcode == 5)
+    {
+        // error message opcode found, print a warning error log
+        sprintf(log_message, "Error: %s.", buffer + 2);
+        print_log(ERROR, log_message);
+    }
+}
+
+void send_RRQ(char * file_name)
+{
+    // final transfer buffer length
+    int len = 0;
+
+    // transfer buffer
+    char buffer[BUFSIZE];
+
+    // opcode to be used (RRQ = 1)
+    uint16_t opcode = htons(1);
+
+    // terminating end string
+    uint8_t end_string = 0;
+
+    // copy opcode to the tranfer buffer
+    memcpy(buffer, &opcode, 2);
+
+    // update transfer buffer size
+    len += 2;
+
+    // copy file name to the transfer buffer
+    strcpy(buffer + len, file_name);
+
+    // update transfer buffer size
+    len += strlen(file_name);
+
+    // add end string to the transfer buffer
+    memcpy(buffer + len, &end_string, 1);
+
+    // update transfer buffer size
+    len++;
+
+    // add tranfer mode to the transfer buffer
+    strcpy(buffer + len, transfer_mode);
+
+    // update transfer buffer size
+    len += strlen(transfer_mode);
+
+    // add final terminating end string to the buffer
+    memcpy(buffer + len, &end_string, 1);
+
+    // update transfer buffer size
+    len++;
+
+    // send RRQ to the TFTP Server
+    int sent_len = sendto(cli_socket,        // client socket
+                          buffer,            // transfer buffer
+                          len,               // transfer buffer length
+                          MSG_CONFIRM,
+                          (const struct sockaddr *) &serv_addr,
+                          sizeof(serv_addr));
+
+    // check for errors
+    if (sent_len <= 0)
+    {
+        // errors occurred, print a warning error message
+        sprintf(log_message, "Error while sending RRQ message: %d", errno);
+        print_log(ERROR, log_message);
+
+        // quit with errors
+        exit(-1);
+    }        
 }
 
 /**
@@ -154,13 +284,16 @@ int main(int argc, char * argv[])
     strcpy(transfer_mode, "bin");
 
     // fill in tftp server address struct: use IPv4 address family
-    serv_addr.sin_family = AF_NET;
+    serv_addr.sin_family = AF_INET;
 
     // set network address
-    inet_pton(AF_INET, server_ip, &servaddr.sin_addr);
+    inet_pton(AF_INET, server_ip, &serv_addr.sin_addr);
 
     // set network port: port numbers below 1024 are privileged ports
-    serv_add.sin_port = htons(port);
+    serv_addr.sin_port = htons(server_port);
+
+    // create client socket descriptor
+    cli_socket = socket(AF_INET, SOCK_DGRAM, 0);
 
     // start main loop
     main_loop();

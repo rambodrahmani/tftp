@@ -10,6 +10,7 @@
 #define TFTP_CLIENT_H
 
 #include <stdio.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -20,6 +21,11 @@
 #include <netinet/in.h>
 
 #include "common.h"
+
+/**
+ * Char array used for formatted log messages.
+ */
+char log_message[1024];
 
 /**
  * TFTP Server IP Address.
@@ -35,6 +41,11 @@ int server_port;
  * TFTP Server Address Struct.
  */
 struct sockaddr_in serv_addr;
+
+/**
+ * Client Socket.
+ */
+int cli_socket;
 
 /**
  * TFTP Transfer Mode.
@@ -60,6 +71,20 @@ void print_prompt();
  * Sets the transfer mode based on the given input command.
  */
 void set_transfer_mode();
+
+/**
+ * Retrieves parameters for the !get command and transfers the file from the
+ * TFTP Server to the Client.
+ */
+void get_file();
+
+/**
+ * Sends the RRQ for the given file name using the provided socket. The transfer
+ * mode is the one globally set using the !mode command.
+ *
+ * @param  sockfd     client socket file descriptor;
+ */
+void send_RRQ(char * file_name);
 
 #endif
 
