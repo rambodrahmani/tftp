@@ -37,7 +37,7 @@ void check_errno(int ret)
     if (ret <= 0)
     {
         // errors occurred, print a warning error message
-        sprintf(log_message, "An unexpected error happened: %d", errno);
+        sprintf(log_message, "An unexpected error happened: errno=%d", errno);
         print_log(ERROR, log_message);
 
         // quit with errors

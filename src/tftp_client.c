@@ -165,19 +165,39 @@ void get_file()
     }
     else if (opcode == 3)           // check the opcode for data messages
     {
+        // block number
+        uint16_t block_number;
+        memcpy(&block_number, (uint16_t*) &buffer[2], 2);
+        block_number = ntohs(block_number);
+        
         // print info log message
         print_log(INFO, "Transferring file from the Server.");
 
         // open file in write mode
         FILE * dest_file = fopen(dest ,"w");
 
+        // check if the file was correctly opened
+        if (dest_file == NULL)
+        {
+            // if not, print a warning error log
+            sprintf(log_message, "Error while opening the destination file: "
+                                 "errno = %d", errno);
+            print_log(ERROR, log_message);
+
+            // exit with error
+            exit(-1);
+        }
+
         // write received buffer to the file considering that each data packet
         // has 2 bytes opcode and 2 bytes block number
-        for (int i = 0; i < len - 4; i++)
+        for (int i = 0; i < recv_len - 4; i++)
         {
             // skip opcode and block number and write
             fputc(buffer[i + 4], dest_file);
         }
+
+        // send ACK packet for received block
+        send_ACK(block_number);
     }
 }
 
@@ -226,6 +246,41 @@ void send_RRQ(char * file_name)
     len++;
 
     // send RRQ to the TFTP Server
+    int sent_len = sendto(cli_socket,        // client socket
+                          buffer,            // transfer buffer
+                          len,               // transfer buffer length
+                          MSG_CONFIRM,
+                          (const struct sockaddr *) &serv_addr,
+                          sizeof(serv_addr));
+
+    // check for errors
+    check_errno(sent_len);
+}
+
+void send_ACK(uint16_t block_number)
+{
+    // file transfer buffer length
+    int len = 0;
+
+    // transfer buffer
+    char buffer[BUFSIZE];
+
+    // opcode to be used (ACK = 4)
+    uint16_t opcode = htons(4);
+
+    // copy opcode to the tranfer buffer
+    memcpy(buffer, &opcode, 2);
+
+    // update transfer buffer size
+    len += 2;
+
+    // copy file name to the transfer buffer
+    memcpy(buffer + len, &block_number, 2);
+
+    // update transfer buffer size
+    len += 2;
+
+    // send ACK to the TFTP Server
     int sent_len = sendto(cli_socket,        // client socket
                           buffer,            // transfer buffer
                           len,               // transfer buffer length

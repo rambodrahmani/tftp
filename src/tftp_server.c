@@ -94,16 +94,13 @@ void listen_for_packets()
     char buffer[BUFSIZE];
 
     // received file name
-    char file_name[32];
+    char file_name[512];
 
     // received transfer mode
     char mode[32];
 
     // received opcode
     uint16_t opcode;
-
-    // file transfer block number
-    uint16_t block_number;
 
     // 
     pid_t fork_id;
@@ -145,6 +142,93 @@ void listen_for_packets()
 
             // handle invalid opcode received
             handle_invalid_opcode(cli_addr);
+        }
+
+        // requested file full path
+        char * path = malloc(strlen(base_dir) + strlen(file_name) + 1);
+
+        // set requested file full path
+        strcpy(path, base_dir);
+        strcat(path, "/");
+        strcat(path, file_name);
+
+        // check if the file actually exists
+        if( access( path, F_OK ) != -1 )
+        {
+            // file exists, nothing to do
+            printf("%s", path);
+        }
+        else
+        {
+            // file doesn't exist, print an error log message
+            sprintf(log_message, "Unable to open the requested file: %s.", path);
+            print_log(ERROR, log_message);
+
+            // send error message to the client
+            handle_file_not_found(cli_addr);
+
+            // loop again
+            continue;
+        }
+
+        // create a new process by duplicating the calling process
+        fork_id = fork();
+
+        // on success, the PID of the child process is returned in the parent,
+        // and 0 is returned in the child.  On failure, -1 is returned in the
+        // parent, no child process is created, and errno is set appropriately
+        if (fork_id == 0)       // child process
+        {
+            // clear the buffer
+            memset(buffer, 0, BUFSIZE);
+
+            // new socket to be used to send data packets
+            int data_sock = socket(AF_INET, SOCK_DGRAM, 0);
+
+            // check if the socket was correctl created
+            check_errno(data_sock);
+
+            // check requested transfer mode
+            if (strncmp(mode, "txt", 3) == 0)       // TEXT MODE
+            {
+                // print an info log message
+                print_log(INFO, "Starting File Transfer in TEXT mode.");
+
+                // open file
+                FILE * src_file = fopen(file_name ,"r");
+
+                // check if the file was correctly opened
+                if (src_file == NULL)
+                {
+                    // if not, print a warning error log
+                    sprintf(log_message, "Error while opening the destination file: "
+                                         "errno = %d", errno);
+                    print_log(ERROR, log_message);
+
+                    // send error message to the client
+                    handle_file_not_found(cli_addr);
+
+                    // exit with error
+                    exit(-1);
+                }
+            }
+            else if(strncmp(mode, "bin", 3) == 0)   // BINARY MODE
+            {
+            }
+        }
+        else if (fork_id > 0)   // parent process
+        {
+            // just clear the buffer before looping again
+            memset(buffer, 0, BUFSIZE);
+        }
+        else if (fork_id < 0)   // fork() error
+        {
+            // print a warning error log message
+            print_log(ERROR, "Error while creating child process for client."
+                             " Quitting.");
+
+            // exit wirh error
+            exit(-1);
         }
     }
 }
@@ -195,6 +279,54 @@ void handle_invalid_opcode(struct sockaddr cli_addr)
     // error message correctly sent
     print_log(INFO, "Error message correctly sent.");
 }
+
+void handle_file_not_found(struct sockaddr cli_addr)
+{
+    // terminating end string
+    uint8_t end_string = 0;
+
+    // response message buffer
+    char buffer[BUFSIZE];
+
+    // response message error message text
+    char error_message[512];
+
+    // set opcode (ERROR = 5)
+    uint16_t opcode = htons(5);
+
+    // set error code (1 = File not found)
+    uint16_t error_code = htons(1);
+
+    // copy opcode to the transfer buffer
+    memcpy(buffer, &opcode, 2);
+
+    // copy error code to the transfer buffer
+    memcpy(buffer + 2, &error_code, 2);
+
+    // set error message text
+    strcpy(error_message, "File not found");
+
+    // copy error message to the tranfer buffer
+    strcpy(buffer + 2, error_message);
+
+    // add final terminating end string to the buffer
+    memcpy(buffer + strlen(error_message) + 2, &end_string, 1);
+    
+    // send error message to the TFTP client
+    int sent_len = sendto(listener,
+                          buffer,
+                          strlen(error_message) + 4,
+                          MSG_CONFIRM,
+                          (const struct sockaddr *) &cli_addr,
+                          sizeof(cli_addr));
+
+    // check for errors
+    check_errno(sent_len);
+
+    // error message correctly sent
+    print_log(INFO, "Error message correctly sent.");
+}
+
 
 /**
  * Entry point.

@@ -86,5 +86,11 @@ void get_file();
  */
 void send_RRQ(char * file_name);
 
+/**
+ * Sends the ACK packet for the given block number.
+ *
+ * @param  received  block number.
+ */
+void send_ACK(uint16_t block_number);
 #endif
 
