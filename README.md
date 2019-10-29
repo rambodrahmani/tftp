@@ -111,3 +111,56 @@ mode field contains the string "netascii", "octet", or "mail" (or any
 combination of upperand lower case, such as "NETASCII", "NetAscii", etc.) in
 netascii indicating the three modes defined in the protocol.
 
+Data is actually transferred in DATA packets
+```
+ 2 bytes     2 bytes      n bytes
++--------+------------+------------+
+| Opcode |   Block #  |   Data     |
++--------+------------+------------+
+
+```
+DATA packets (opcode = 3) have a block number and data field. The block numbers
+on data packets begin with one and increase by one for each new block of data.
+This restriction allows the program to use a single number to discriminate
+between new packets and duplicates. The data field is from zero to 512 bytes
+long. If it is 512 bytes long, the block is not the last block of data; if it is
+from zero to 511 bytes long, it signals the end of the transfer.
+
+ACK Packet:
+```
+ 2 bytes    2 bytes
++--------+------------+
+| Opcode |   Block #  |
++--------+------------+
+```
+All packets other than duplicate ACK's and those used for termination are
+acknowledged unless a timeout occurs. Sending a DATA packet is an acknowledgment
+for the first ACK packet of the previous DATA packet.
+
+ERROR packet:
+```
+ 2 bytes     2 bytes      string    1 byte
++--------+------------+------------+------+
+| Opcode |  ErrorCode |   ErrMsg   |   0  |
++--------+------------+------------+------+
+```
+An ERROR packet can be the acknowledgment of any other type of packet. The error
+code is an integer indicating the nature of the error. The error message is
+intended for human consumption, and should be in netascii. Like all other
+strings, it is terminated witha zero byte.
+
+Error Codes:
+```
+   Value     Meaning
+   --------------------------------------------------
+   0         Not defined, see error message (if any).
+   1         File not found.
+   2         Access violation.
+   3         Disk full or allocation exceeded.
+   4         Illegal TFTP operation.
+   5         Unknown transfer ID.
+   6         File already exists.
+   7         No such user.
+   --------------------------------------------------
+```
+
