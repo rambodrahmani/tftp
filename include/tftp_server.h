@@ -33,6 +33,11 @@ char log_message[1024];
 char *base_dir;
 
 /**
+ * Listener UDP Server.
+ */
+int listener;
+
+/**
  * Creates a listener socket having domain AF_INET and type SOCK_DGRAM on the
  * given port and binds it to the address and port specified.
  *
@@ -43,22 +48,19 @@ char *base_dir;
 int createUDPSocket(int port);
 
 /**
- * Implements the mail loop with the UDP listener server waiting for incoming
+ * Implements the main loop with the UDP listener server waiting for incoming
  * packets.
- *
- * @param  socket  the UDP socket to be used to listen for incoming packets.
  */
-void listen_for_packets(int socket);
+void listen_for_packets();
 
 /**
  * Handles invalid opcodes received from the TFTP Client. An error message
  * (opcode = 5) is sent to the client for illegal TFTP operation (error code =
  * 4).
  *
- * @param  sockfd    the socket to be used to send the Error Message.
  * @param  cli_addr  TFTP Client socket address.
  */
-void handle_invalid_opcode(int sockfd, struct sockaddr cli_addr);
+void handle_invalid_opcode(struct sockaddr cli_addr);
 
 #endif
 

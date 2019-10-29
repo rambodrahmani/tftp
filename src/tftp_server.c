@@ -76,7 +76,7 @@ int createUDPSocket(int port)
     return sockfd;
 }
 
-void listen_for_packets(int socket)
+void listen_for_packets()
 {
     // print info log message
     print_log(INFO, "Main listener loop started.");
@@ -111,23 +111,15 @@ void listen_for_packets(int socket)
     // infinite loop
     while(1)
     {
-        // clean the buffer
+        // clean incoming messages buffer
         memset(buffer, 0, BUFSIZE);
 
         // recieve the data
-        recv_len = recvfrom(socket, (char *)buffer, BUFSIZE, MSG_WAITALL,
+        recv_len = recvfrom(listener, (char *)buffer, BUFSIZE, MSG_WAITALL,
                             &cli_addr, (socklen_t *)&cli_size);
 
         // check for errors
-        if (recv_len <= 0)
-        {
-            // errors occurred, print a warning error message
-            sprintf(log_message, "Error while sending ERROR message: %d", errno);
-            print_log(ERROR, log_message);
-
-            // quit with errors
-            exit(-1);
-        }
+        check_errno(recv_len);
 
         // retrieve opcode
         memcpy(&opcode, (uint16_t*)&buffer, 2);
@@ -152,12 +144,12 @@ void listen_for_packets(int socket)
             print_log(ERROR, log_message);
 
             // handle invalid opcode received
-            handle_invalid_opcode(socket, cli_addr);
+            handle_invalid_opcode(cli_addr);
         }
     }
 }
 
-void handle_invalid_opcode(int sockfd, struct sockaddr cli_addr)
+void handle_invalid_opcode(struct sockaddr cli_addr)
 {
     // terminating end string
     uint8_t end_string = 0;
@@ -190,7 +182,7 @@ void handle_invalid_opcode(int sockfd, struct sockaddr cli_addr)
     memcpy(buffer + strlen(error_message) + 2, &end_string, 1);
     
     // send error message to the TFTP client
-    int sent_len = sendto(sockfd,
+    int sent_len = sendto(listener,
                           buffer,
                           strlen(error_message) + 4,
                           MSG_CONFIRM,
@@ -198,15 +190,7 @@ void handle_invalid_opcode(int sockfd, struct sockaddr cli_addr)
                           sizeof(cli_addr));
 
     // check for errors
-    if (sent_len <= 0)
-    {
-        // errors occurred, print a warning error message
-        sprintf(log_message, "Error while sending ERROR message: %d", errno);
-        print_log(ERROR, log_message);
-
-        // quit with errors
-        exit(-1);
-    }
+    check_errno(sent_len);
 
     // error message correctly sent
     print_log(INFO, "Error message correctly sent.");
@@ -280,7 +264,7 @@ int main(int argc, char * argv[])
     }
 
     // create listener UDP server
-    int listener = createUDPSocket(port);
+    listener = createUDPSocket(port);
 
     // check if the listener socket was correctly created
     if (listener < 0)
@@ -293,7 +277,7 @@ int main(int argc, char * argv[])
     }
 
     // start main loop
-    listen_for_packets(listener);
+    listen_for_packets();
 
     // return with no errors
     return 0;

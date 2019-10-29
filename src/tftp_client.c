@@ -150,15 +150,7 @@ void get_file()
                             (socklen_t *)& addr_len);
 
     // check for errors
-    if (recv_len <= 0)
-    {
-        // errors occurred, print a warning error message
-        sprintf(log_message, "Error while receiving server response: %d", errno);
-        print_log(ERROR, log_message);
-
-        // quit with errors
-        exit(-1);
-    }
+    check_errno(recv_len);
 
     // retrieve server response opcode
     memcpy(&opcode, (uint16_t*)&buffer, 2);
@@ -182,7 +174,7 @@ void send_RRQ(char * file_name)
     char buffer[BUFSIZE];
 
     // opcode to be used (RRQ = 1)
-    uint16_t opcode = htons(1);
+    uint16_t opcode = htons(2);
 
     // terminating end string
     uint8_t end_string = 0;
@@ -226,15 +218,7 @@ void send_RRQ(char * file_name)
                           sizeof(serv_addr));
 
     // check for errors
-    if (sent_len <= 0)
-    {
-        // errors occurred, print a warning error message
-        sprintf(log_message, "Error while sending RRQ message: %d", errno);
-        print_log(ERROR, log_message);
-
-        // quit with errors
-        exit(-1);
-    }        
+    check_errno(sent_len);
 }
 
 /**

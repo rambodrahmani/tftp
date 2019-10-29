@@ -10,6 +10,8 @@
 #define COMMON_H
 
 #include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
 
 /**
  * Maximum incoming buffer size.
@@ -34,6 +36,13 @@ typedef enum
  * @param  message  the text of the log message.
  */
 void print_log(LogType type, const char * message);
+
+/**
+ * Checks for transfer errors and eventually prints the content of errno.
+ *
+ * @param  ret  transfer result.
+ */
+void check_errno(int ret);
 
 #endif
 
