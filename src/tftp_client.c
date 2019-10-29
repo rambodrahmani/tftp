@@ -156,12 +156,28 @@ void get_file()
     memcpy(&opcode, (uint16_t*)&buffer, 2);
     opcode = ntohs(opcode);
 
-    // check the opcode
+    // check the opcode for error messages
     if (opcode == 5)
     {
         // error message opcode found, print a warning error log
         sprintf(log_message, "Error: %s.", buffer + 2);
         print_log(ERROR, log_message);
+    }
+    else if (opcode == 3)           // check the opcode for data messages
+    {
+        // print info log message
+        print_log(INFO, "Transferring file from the Server.");
+
+        // open file in write mode
+        FILE * dest_file = fopen(dest ,"w");
+
+        // write received buffer to the file considering that each data packet
+        // has 2 bytes opcode and 2 bytes block number
+        for (int i = 0; i < len - 4; i++)
+        {
+            // skip opcode and block number and write
+            fputc(buffer[i + 4], dest_file);
+        }
     }
 }
 
@@ -174,7 +190,7 @@ void send_RRQ(char * file_name)
     char buffer[BUFSIZE];
 
     // opcode to be used (RRQ = 1)
-    uint16_t opcode = htons(2);
+    uint16_t opcode = htons(1);
 
     // terminating end string
     uint8_t end_string = 0;
