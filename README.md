@@ -18,6 +18,9 @@ No clean up is made after compilation. You can manually do it using:
 make cleanup
 ```
 
+# Usage
+![How to use example screenshot](/references/usage.png)
+
 ### Project structure
 ```
 TFTP |--base_dir/      Contains sample files for testing purposes
