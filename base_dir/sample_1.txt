@@ -1,1 +1,3 @@
+START XAGNNO34uW
 Sample text file for TFTP transfer.
+END vQ4rtilcAt

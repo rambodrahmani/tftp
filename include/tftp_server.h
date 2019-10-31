@@ -43,7 +43,7 @@ int listener;
  *
  * @param  port  server socket port;
  *
- * @return       the created UDP socket or < 0 in case of error.
+ * @return  the initialized listener UDP Socket or -1 in case of error.
  */
 int createUDPSocket(int port);
 

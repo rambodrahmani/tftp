@@ -1,0 +1,6 @@
+START Z3z2x7I23v
+Sample text file for TFTP transfer.
+Sample text file for TFTP transfer.
+Sample text file for TFTP transfer.
+Sample text file for TFTP transfer.
+END NLoGi0Iywr

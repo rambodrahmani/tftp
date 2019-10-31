@@ -25,11 +25,7 @@ int createUDPSocket(int port)
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 
     // check if the socket was correctly created
-    if (sockfd < 0)
-    {
-        // return with errors
-        return -1;
-    }
+    check_errno(sockfd, "Error while creating listener UDP Socket");
 
     // zero out server address struct
     memset(&serv_addr, 0, sizeof(serv_addr));
@@ -49,7 +45,10 @@ int createUDPSocket(int port)
     // check if the socket bound succeeded
     if (bound < 0)
     {
-        // return with errors
+        // print a warning log message
+        print_log(ERROR, "Error while binding listener UDP Socket");
+
+        // return with error
         return -1;
     }
 
@@ -116,7 +115,7 @@ void listen_for_packets()
                             &cli_addr, (socklen_t *)&cli_size);
 
         // check for errors
-        check_errno(recv_len, "listening for packets.");
+        check_errno(recv_len, "Error while listening for packets");
 
         // retrieve opcode
         memcpy(&opcode, (uint16_t*)&buffer, 2);
@@ -185,7 +184,7 @@ void listen_for_packets()
             int data_sock = socket(AF_INET, SOCK_DGRAM, 0);
 
             // check if the socket was correctl created
-            check_errno(data_sock, "creating child process socket.");
+            check_errno(data_sock, "Error while creating child process socket");
 
             // source file pointer
             FILE * src_file;
@@ -262,7 +261,8 @@ void listen_for_packets()
                                               sizeof(cli_addr));
 
                             // check for errors
-                            check_errno(recv_len, "text mode data packet sent.");
+                            check_errno(recv_len, "Error while sending data "
+                                                  "packet in text mode");
 
                             // print info log message
                             sprintf(log_message, "Data packet with block number"
@@ -283,7 +283,7 @@ void listen_for_packets()
                                                 (socklen_t *)&cli_size);
 
                             // check for errors
-                            check_errno(recv_len, "receiving ACK packet.");
+                            check_errno(recv_len, "Error while receiving ACK packet.");
 
                             // print info log message
                             sprintf(log_message, "ACK response received for "
@@ -337,7 +337,7 @@ void listen_for_packets()
                     do
                     {
                         // retrieve next char from the file
-                        dim = fread(&buffer[i++], 1, 1, src_file);
+                        dim = fread(&buffer[i], 1, 1, src_file);
 
                         // increase chars counter
                         i++;
@@ -368,7 +368,8 @@ void listen_for_packets()
                                               sizeof(cli_addr));
 
                             // check for errors
-                            check_errno(recv_len, "binary mode data packet sent.");
+                            check_errno(recv_len, "Error while sending data "
+                                                  "packet in binary mode");
 
                             // print info log message
                             sprintf(log_message, "Data packet with block number"
@@ -389,7 +390,7 @@ void listen_for_packets()
                                                 (socklen_t *)&cli_size);
 
                             // check for errors
-                            check_errno(recv_len, "receiving ACK packet.");
+                            check_errno(recv_len, "Error while receiving ACK packet.");
 
                             // print info log message
                             sprintf(log_message, "ACK response received for "
@@ -486,7 +487,7 @@ void handle_invalid_opcode(struct sockaddr cli_addr)
                           sizeof(cli_addr));
 
     // check for errors
-    check_errno(sent_len, "handling invalid opcode.");
+    check_errno(sent_len, "Error while sending invalid opcode error message");
 
     // error message correctly sent
     print_log(INFO, "Error message correctly sent.");
@@ -533,7 +534,7 @@ void handle_file_not_found(int socket, struct sockaddr cli_addr)
                           sizeof(cli_addr));
 
     // check for errors
-    check_errno(sent_len, "handling file not found.");
+    check_errno(sent_len, "Error while sending file not found error message");
 
     // error message correctly sent
     print_log(INFO, "Error message correctly sent.");
