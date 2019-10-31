@@ -66,9 +66,10 @@ void handle_invalid_opcode(struct sockaddr cli_addr);
  * Handles requested file form client not found. An error message (opcode = 5)
  * is sent to the client for File not found (error code = 1:).
  *
- * @param  cli_addr  TFTP Client socket address.
+ * @param  cli_addr  TFTP Client socket address;
+ * @param  socket    the socket to be used to send the error message.
  */
-void handle_file_not_found(struct sockaddr cli_addr);
+void handle_file_not_found(int socket, struct sockaddr cli_addr);
 
 #endif
 

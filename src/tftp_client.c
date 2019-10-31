@@ -117,6 +117,9 @@ void set_transfer_mode()
 
 void get_file()
 {
+    // create client socket descriptor
+    cli_socket = socket(AF_INET, SOCK_DGRAM, 0);
+
     // transfer source file
     char source[256];
 
@@ -405,9 +408,6 @@ int main(int argc, char * argv[])
 
     // set network port: port numbers below 1024 are privileged ports
     serv_addr.sin_port = htons(server_port);
-
-    // create client socket descriptor
-    cli_socket = socket(AF_INET, SOCK_DGRAM, 0);
 
     // start main loop
     main_loop();

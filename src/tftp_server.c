@@ -108,8 +108,8 @@ void listen_for_packets()
     // infinite loop
     while(1)
     {
-        // clean incoming messages buffer
-        memset(buffer, 0, BUFSIZE);
+        // print info log message
+        print_log(INFO, "Listening for incoming packets.");
 
         // recieve the data
         recv_len = recvfrom(listener, (char *)buffer, BUFSIZE, MSG_WAITALL,
@@ -164,7 +164,7 @@ void listen_for_packets()
             print_log(ERROR, log_message);
 
             // send error message to the client
-            handle_file_not_found(cli_addr);
+            handle_file_not_found(listener, cli_addr);
 
             // loop again
             continue;
@@ -207,7 +207,7 @@ void listen_for_packets()
                                      "Transfer Cancelled.");
 
                     // send error message to the client
-                    handle_file_not_found(cli_addr);
+                    handle_file_not_found(data_sock, cli_addr);
 
                     // loop again
                     continue;
@@ -316,7 +316,7 @@ void listen_for_packets()
                                      "Transfer Cancelled.");
 
                     // send error message to the client
-                    handle_file_not_found(cli_addr);
+                    handle_file_not_found(data_sock, cli_addr);
 
                     // loop again
                     continue;
@@ -414,7 +414,7 @@ void listen_for_packets()
             fclose(src_file);
 
             // close transfer socket
-            close(listener);
+            close(data_sock);
 
             // file transfer completed, print an info log message
             sprintf(log_message, "File %s correctly transferred to the Client.",
@@ -488,7 +488,7 @@ void handle_invalid_opcode(struct sockaddr cli_addr)
     print_log(INFO, "Error message correctly sent.");
 }
 
-void handle_file_not_found(struct sockaddr cli_addr)
+void handle_file_not_found(int socket, struct sockaddr cli_addr)
 {
     // terminating end string
     uint8_t end_string = 0;
@@ -521,7 +521,7 @@ void handle_file_not_found(struct sockaddr cli_addr)
     memcpy(buffer + strlen(error_message) + 2, &end_string, 1);
     
     // send error message to the TFTP client
-    int sent_len = sendto(listener,
+    int sent_len = sendto(socket,
                           buffer,
                           strlen(error_message) + 4,
                           MSG_CONFIRM,
