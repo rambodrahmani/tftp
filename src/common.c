@@ -29,6 +29,27 @@ void print_log(LogType type, const char *message)
     }
 }
 
+void child_log(LogType type, const char *message)
+{
+    // check the given type
+    switch(type)
+    {
+        // info log message
+        case INFO:
+            {
+                fprintf(stdout, "--> %s \n", message);
+                break;
+            }
+
+        // error log message
+        case ERROR:
+            {
+                fprintf(stderr, "--!> %s \n", message);
+                break;
+            }
+    }
+}
+
 void check_errno(int ret, char * info)
 {
     char log_message[1024];

@@ -65,6 +65,7 @@ void main_loop()
 
 void print_help_menu()
 {
+    // print help message to STDOUT
     fprintf(stdout, "\n> Options:\n"
                     "   !mode <mode>\t\tSets the transfer mode to be used: "
                     "<txt> for text mode and <bin> for binary mode.\n"
@@ -250,7 +251,10 @@ void get_file()
             send_ACK(block_number);
         }
 
-        // transfer completed, close the socket
+        // transfer completed, shutdown socket read and write
+        shutdown(cli_socket, SHUT_RDWR);
+
+        // close the socket
         close(cli_socket);
 
         // close the destination file stream

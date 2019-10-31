@@ -43,6 +43,15 @@ typedef enum
 void print_log(LogType type, const char * message);
 
 /**
+ * Custom logging method for child processes log messages in order to be able to
+ * distinguish them from the parent process.
+ *
+ * @param  type     the type of the log message;
+ * @param  message  the text of the log message.
+ */
+void child_log(LogType type, const char * message);
+
+/**
  * Checks for transfer errors and eventually prints the content of errno.
  *
  * @param  ret   transfer result;

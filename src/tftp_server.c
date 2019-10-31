@@ -194,7 +194,7 @@ void listen_for_packets()
             if (strncmp(mode, "netascii", 8) == 0)       // TEXT MODE
             {
                 // print an info log message
-                print_log(INFO, "Starting File Transfer in TEXT mode.");
+                child_log(INFO, "Starting File Transfer in TEXT mode.");
 
                 // open file as text file
                 src_file = fopen(path, "r");
@@ -203,7 +203,7 @@ void listen_for_packets()
                 if (src_file == NULL)
                 {
                     // if not, print a warning log message
-                    print_log(ERROR, "Error while opening transfer file. "
+                    child_log(ERROR, "Error while opening transfer file. "
                                      "Transfer Cancelled.");
 
                     // send error message to the client
@@ -269,7 +269,7 @@ void listen_for_packets()
                                                  " %04x %04x sent. Waiting "
                                                  "to receive ACK response.",
                                                  buffer[2], buffer[3]);
-                            print_log(INFO, log_message);
+                            child_log(INFO, log_message);
 
                             // clear transfer buffer
                             memset(buffer, 0, BUFSIZE);
@@ -303,7 +303,7 @@ void listen_for_packets()
             else if(strncmp(mode, "octet", 5) == 0)     // BINARY MODE
             {
                 // print an info log message
-                print_log(INFO, "Starting File Transfer in BINARY mode.");
+                child_log(INFO, "Starting File Transfer in BINARY mode.");
 
                 // open file as non-text file
                 src_file = fopen(path, "rb");
@@ -312,7 +312,7 @@ void listen_for_packets()
                 if (src_file == NULL)
                 {
                     // if not, print a warning log message
-                    print_log(ERROR, "Error while opening transfer file. "
+                    child_log(ERROR, "Error while opening transfer file. "
                                      "Transfer Cancelled.");
 
                     // send error message to the client
@@ -375,7 +375,7 @@ void listen_for_packets()
                                                  " %04x %04x sent. Waiting "
                                                  "to receive ACK response.",
                                                  buffer[2], buffer[3]);
-                            print_log(INFO, log_message);
+                            child_log(INFO, log_message);
 
                             // clear transfer buffer
                             memset(buffer, 0, BUFSIZE);
@@ -395,6 +395,7 @@ void listen_for_packets()
                             sprintf(log_message, "ACK response received for "
                                                  "block number: %04x %04x.",
                                                  buffer[2], buffer[3]);
+                            child_log(INFO, log_message);
 
                             // reset chars counter for new transfer
                             i = 4;
@@ -419,7 +420,7 @@ void listen_for_packets()
             // file transfer completed, print an info log message
             sprintf(log_message, "File %s correctly transferred to the Client.",
                                  file_name);
-            print_log(INFO, log_message);
+            child_log(INFO, log_message);
 
             // kill child process
             exit(0);
