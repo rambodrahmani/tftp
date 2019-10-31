@@ -97,12 +97,12 @@ void listen_for_packets()
     char file_name[512];
 
     // received transfer mode
-    char mode[32];
+    char mode[10];
 
     // received opcode
     uint16_t opcode;
 
-    // 
+    // process fork id
     pid_t fork_id;
 
     // infinite loop
@@ -116,7 +116,7 @@ void listen_for_packets()
                             &cli_addr, (socklen_t *)&cli_size);
 
         // check for errors
-        check_errno(recv_len);
+        check_errno(recv_len, "listening for packets.");
 
         // retrieve opcode
         memcpy(&opcode, (uint16_t*)&buffer, 2);
@@ -156,7 +156,6 @@ void listen_for_packets()
         if( access( path, F_OK ) != -1 )
         {
             // file exists, nothing to do
-            printf("%s", path);
         }
         else
         {
@@ -186,35 +185,244 @@ void listen_for_packets()
             int data_sock = socket(AF_INET, SOCK_DGRAM, 0);
 
             // check if the socket was correctl created
-            check_errno(data_sock);
+            check_errno(data_sock, "creating child process socket.");
+
+            // source file pointer
+            FILE * src_file;
 
             // check requested transfer mode
-            if (strncmp(mode, "txt", 3) == 0)       // TEXT MODE
+            if (strncmp(mode, "netascii", 8) == 0)       // TEXT MODE
             {
                 // print an info log message
                 print_log(INFO, "Starting File Transfer in TEXT mode.");
 
-                // open file
-                FILE * src_file = fopen(file_name ,"r");
+                // open file as text file
+                src_file = fopen(path, "r");
 
                 // check if the file was correctly opened
                 if (src_file == NULL)
                 {
-                    // if not, print a warning error log
-                    sprintf(log_message, "Error while opening the destination file: "
-                                         "errno = %d", errno);
-                    print_log(ERROR, log_message);
+                    // if not, print a warning log message
+                    print_log(ERROR, "Error while opening transfer file. "
+                                     "Transfer Cancelled.");
 
                     // send error message to the client
                     handle_file_not_found(cli_addr);
 
-                    // exit with error
-                    exit(-1);
+                    // loop again
+                    continue;
+                }
+                else
+                {
+                    // single char store
+                    char c;
+
+                    // chars counter: the first 4 bytes of the transfer buffer
+                    // must be left empty for the opcode and block number
+                    int i = 4;
+
+                    // data transfer blocks counter
+                    uint16_t block_counter = 1;
+
+                    // until the EOF is found in the opened file
+                    do
+                    {
+                        // retrieve next char from the file
+                        c = fgetc(src_file);
+
+                        // copy retrieved char in the transfer buffer
+                        buffer[i] = c;
+
+                        // increase chars counter
+                        i++;
+
+                        // check if either the maximum number of chars or the
+                        // EOF has been reached
+                        if (i == MAX + 4 || c == EOF)
+                        {
+                            // if so, send the message to the client
+                            // opcode = 3 (= DATA)
+                            opcode = htons(3);
+
+                            // set block number
+                            uint16_t block = htons(block_counter);
+
+                            // copy opcode to the transfer buffer
+                            memcpy(buffer, &opcode, 2);
+
+                            // copy block_number to the transfer buffer
+                            memcpy(buffer + 2, &block, 2);
+
+                            // send transfer buffer to the client
+                            recv_len = sendto(data_sock,
+                                              buffer,
+                                              i,
+                                              MSG_CONFIRM,
+                                              (const struct sockaddr *) &cli_addr,
+                                              sizeof(cli_addr));
+
+                            // check for errors
+                            check_errno(recv_len, "text mode data packet sent.");
+
+                            // print info log message
+                            sprintf(log_message, "Data packet with block number"
+                                                 " %04x %04x sent. Waiting "
+                                                 "to receive ACK response.",
+                                                 buffer[2], buffer[3]);
+                            print_log(INFO, log_message);
+
+                            // clear transfer buffer
+                            memset(buffer, 0, BUFSIZE);
+
+                            // wait for ACK response from the client
+                            recv_len = recvfrom(data_sock,
+                                                (char *)buffer,
+                                                BUFSIZE,
+                                                MSG_WAITALL,
+                                                (struct sockaddr *) &cli_addr,
+                                                (socklen_t *)&cli_size);
+
+                            // check for errors
+                            check_errno(recv_len, "receiving ACK packet.");
+
+                            // print info log message
+                            sprintf(log_message, "ACK response received for "
+                                                 "block number: %04x %04x.",
+                                                 buffer[2], buffer[3]);
+
+                            // reset chars counter for new transfer
+                            i = 4;
+
+                            // increase block number counter
+                            block_counter++;
+                        }
+                    }
+                    while (c != EOF);
                 }
             }
-            else if(strncmp(mode, "bin", 3) == 0)   // BINARY MODE
+            else if(strncmp(mode, "octet", 5) == 0)     // BINARY MODE
             {
+                // print an info log message
+                print_log(INFO, "Starting File Transfer in BINARY mode.");
+
+                // open file as non-text file
+                src_file = fopen(path, "rb");
+
+                // check if the file was correctly opened
+                if (src_file == NULL)
+                {
+                    // if not, print a warning log message
+                    print_log(ERROR, "Error while opening transfer file. "
+                                     "Transfer Cancelled.");
+
+                    // send error message to the client
+                    handle_file_not_found(cli_addr);
+
+                    // loop again
+                    continue;
+                }
+                else
+                {
+                    // size in bytes of the data read from the file
+                    size_t dim = 0;
+
+                    // chars counter: the first 4 bytes of the transfer buffer
+                    // must be left empty for the opcode and block number
+                    int i = 4;
+
+                    // data transfer blocks counter
+                    uint16_t block_counter = 1;
+
+                    // until the EOF is found in the opened file
+                    do
+                    {
+                        // retrieve next char from the file
+                        dim = fread(&buffer[i++], 1, 1, src_file);
+
+                        // increase chars counter
+                        i++;
+
+                        // check if either the maximum number of chars or the
+                        // EOF has been reached
+                        if (i == MAX + 4 || dim != 1)
+                        {
+                            // if so, send the message to the client
+                            // opcode = 3 (= DATA)
+                            opcode = htons(3);
+
+                            // set block number
+                            uint16_t block = htons(block_counter);
+
+                            // copy opcode to the transfer buffer
+                            memcpy(buffer, &opcode, 2);
+
+                            // copy block_number to the transfer buffer
+                            memcpy(buffer + 2, &block, 2);
+
+                            // send transfer buffer to the client
+                            recv_len = sendto(data_sock,
+                                              buffer,
+                                              i,
+                                              MSG_CONFIRM,
+                                              (const struct sockaddr *) &cli_addr,
+                                              sizeof(cli_addr));
+
+                            // check for errors
+                            check_errno(recv_len, "binary mode data packet sent.");
+
+                            // print info log message
+                            sprintf(log_message, "Data packet with block number"
+                                                 " %04x %04x sent. Waiting "
+                                                 "to receive ACK response.",
+                                                 buffer[2], buffer[3]);
+                            print_log(INFO, log_message);
+
+                            // clear transfer buffer
+                            memset(buffer, 0, BUFSIZE);
+
+                            // wait for ACK response from the client
+                            recv_len = recvfrom(data_sock,
+                                                (char *)buffer,
+                                                BUFSIZE,
+                                                MSG_WAITALL,
+                                                (struct sockaddr *) &cli_addr,
+                                                (socklen_t *)&cli_size);
+
+                            // check for errors
+                            check_errno(recv_len, "receiving ACK packet.");
+
+                            // print info log message
+                            sprintf(log_message, "ACK response received for "
+                                                 "block number: %04x %04x.",
+                                                 buffer[2], buffer[3]);
+
+                            // reset chars counter for new transfer
+                            i = 4;
+
+                            // increase block number counter
+                            block_counter++;
+                        }
+                    }
+                    while (dim == 1);
+                }
             }
+
+            // file transfer complted, clear transfer buffer
+            memset(buffer, 0, BUFSIZE);
+
+            // close source file
+            fclose(src_file);
+
+            // close transfer socket
+            close(listener);
+
+            // file transfer completed, print an info log message
+            sprintf(log_message, "File %s correctly transferred to the Client.",
+                                 file_name);
+            print_log(INFO, log_message);
+
+            // kill child process
+            exit(0);
         }
         else if (fork_id > 0)   // parent process
         {
@@ -274,7 +482,7 @@ void handle_invalid_opcode(struct sockaddr cli_addr)
                           sizeof(cli_addr));
 
     // check for errors
-    check_errno(sent_len);
+    check_errno(sent_len, "handling invalid opcode.");
 
     // error message correctly sent
     print_log(INFO, "Error message correctly sent.");
@@ -321,7 +529,7 @@ void handle_file_not_found(struct sockaddr cli_addr)
                           sizeof(cli_addr));
 
     // check for errors
-    check_errno(sent_len);
+    check_errno(sent_len, "handling file not found.");
 
     // error message correctly sent
     print_log(INFO, "Error message correctly sent.");

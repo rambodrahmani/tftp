@@ -19,6 +19,11 @@
 #define BUFSIZE 1024
 
 /**
+ * Maximum Data Packet buffer size.
+ */
+#define MAX 512
+
+/**
  * Available type for log messages.
  */
 typedef enum
@@ -40,9 +45,10 @@ void print_log(LogType type, const char * message);
 /**
  * Checks for transfer errors and eventually prints the content of errno.
  *
- * @param  ret  transfer result.
+ * @param  ret   transfer result;
+ * @param  info  string containing additional human readable info.
  */
-void check_errno(int ret);
+void check_errno(int ret, char * info);
 
 #endif
 

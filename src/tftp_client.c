@@ -91,17 +91,21 @@ void set_transfer_mode()
     scanf("%s", mode);
 
     // check if the provided mode is valid
-    if ((strncmp(mode, "bin", 3) == 0) || (strncmp(mode, "txt", 3) == 0))
+    if (strncmp(mode, "bin", 3) == 0)           // OCTET
     {
         // store transfer mode
-        strncpy(transfer_mode, mode, 3);
-
-        // prepare log message
-        sprintf(log_message, "Transfer mode set correctly: %s.",
-                              transfer_mode);
+        strncpy(transfer_mode, "octet", 6);
 
         // print log message
-        print_log(INFO, log_message);
+        print_log(INFO, "Transfer mode correctly set to binary mode.");
+    }
+    else if (strncmp(mode, "txt", 3) == 0)      // NETASCII
+    {
+        // store transfer mode
+        strncpy(transfer_mode, "netascii", 9);
+
+        // print log message
+        print_log(INFO, "Transfer mode correctly set to text mode.");
     }
     else
     {
@@ -114,10 +118,10 @@ void set_transfer_mode()
 void get_file()
 {
     // transfer source file
-    char source[512];
+    char source[256];
 
     // transfer destination file
-    char dest[512];
+    char dest[256];
 
     // server response opcode
     int opcode;
@@ -150,7 +154,7 @@ void get_file()
                             (socklen_t *)& addr_len);
 
     // check for errors
-    check_errno(recv_len);
+    check_errno(recv_len, "receiving response after sending RRQ packet.");
 
     // retrieve server response opcode
     memcpy(&opcode, (uint16_t*)&buffer, 2);
@@ -167,7 +171,11 @@ void get_file()
     {
         // block number
         uint16_t block_number;
+
+        // retrieve block number from transfer buffer
         memcpy(&block_number, (uint16_t*) &buffer[2], 2);
+
+        // deserialize block number
         block_number = ntohs(block_number);
         
         // print info log message
@@ -198,7 +206,58 @@ void get_file()
 
         // send ACK packet for received block
         send_ACK(block_number);
-    }
+
+        // until data packets of length >= 516 are sent
+        while (recv_len == 516)
+        {
+            // receive data packet from the Server
+            recv_len = recvfrom(cli_socket,
+                                (char *)buffer,
+                                BUFSIZE,
+                                MSG_WAITALL,
+                                (struct sockaddr *) &serv_addr,
+                                (socklen_t *)& addr_len);
+
+            // check for errors
+            check_errno(recv_len, "receiving data packets.");
+
+            // retrieve block number from transfer buffer
+            memcpy(&block_number, (uint16_t*) &buffer[2], 2);
+
+            // deserialize block number
+            block_number = ntohs(block_number);
+
+            if (recv_len != 516)
+            {
+                for(int i = 0; i < recv_len - 5; i++)
+                {
+                    fputc(buffer[i + 4], dest_file);
+                }
+			}
+
+            // write received buffer to the file considering that each data packet
+            // has 2 bytes opcode and 2 bytes block number
+            for (int i = 0; i < recv_len - 4; i++)
+            {
+                // skip opcode and block number and write
+                fputc(buffer[i + 4], dest_file);
+            }
+
+            // send ACK packet for received block
+            send_ACK(block_number);
+        }
+
+        // transfer completed, close the socket
+        close(cli_socket);
+
+        // close the destination file stream
+        fclose(dest_file);
+
+        // print an info log message
+        sprintf(log_message, "File %s correctly downloaded. Saved in %s.",
+                              source, dest);
+        print_log(INFO, log_message);
+   }
 }
 
 void send_RRQ(char * file_name)
@@ -254,7 +313,7 @@ void send_RRQ(char * file_name)
                           sizeof(serv_addr));
 
     // check for errors
-    check_errno(sent_len);
+    check_errno(sent_len, "sending RRQ packet.");
 }
 
 void send_ACK(uint16_t block_number)
@@ -289,7 +348,7 @@ void send_ACK(uint16_t block_number)
                           sizeof(serv_addr));
 
     // check for errors
-    check_errno(sent_len);
+    check_errno(sent_len, "sending ACK packet.");
 }
 
 /**
@@ -336,7 +395,7 @@ int main(int argc, char * argv[])
     }
 
     // set defaultr transfer mode.
-    strcpy(transfer_mode, "bin");
+    strcpy(transfer_mode, "octet");
 
     // fill in tftp server address struct: use IPv4 address family
     serv_addr.sin_family = AF_INET;

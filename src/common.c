@@ -29,7 +29,7 @@ void print_log(LogType type, const char *message)
     }
 }
 
-void check_errno(int ret)
+void check_errno(int ret, char * info)
 {
     char log_message[1024];
 
@@ -37,7 +37,8 @@ void check_errno(int ret)
     if (ret <= 0)
     {
         // errors occurred, print a warning error message
-        sprintf(log_message, "An unexpected error happened: errno=%d", errno);
+        sprintf(log_message, "An unexpected error happened: info = %s; errno = "
+                             "%d", info, errno);
         print_log(ERROR, log_message);
 
         // quit with errors

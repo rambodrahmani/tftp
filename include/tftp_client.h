@@ -50,7 +50,7 @@ int cli_socket;
 /**
  * TFTP Transfer Mode.
  */
-char transfer_mode[4];
+char transfer_mode[10];
 
 /**
  * Implements the execution main loop.
