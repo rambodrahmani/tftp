@@ -1,7 +1,0 @@
-START wB70FTuNEd
-Sample text file for TFTP transfer. Sample text file for TFTP transfer.
-Sample text file for TFTP transfer. Sample text file for TFTP transfer.
-Sample text file for TFTP transfer. Sample text file for TFTP transfer.
-Sample text file for TFTP transfer. Sample text file for TFTP transfer.
-Sample text file for TFTP transfer. Sample text file for TFTP transfer.
-END mE7J8dWrOP
