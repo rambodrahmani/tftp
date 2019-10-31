@@ -1,8 +1,8 @@
 START KGsrO80SBf
-Sample text file for TFTP transfer.
-Sample text file for TFTP transfer.
-Sample text file for TFTP transfer.
-Sample text file for TFTP transfer.
-Sample text file for TFTP transfer.
-Sample text file for TFTP transfer.
+Sample text file for TFTP transfer. Sample text file for TFTP transfer.
+Sample text file for TFTP transfer. Sample text file for TFTP transfer.
+Sample text file for TFTP transfer. Sample text file for TFTP transfer.
+Sample text file for TFTP transfer. Sample text file for TFTP transfer.
+Sample text file for TFTP transfer. Sample text file for TFTP transfer.
+Sample text file for TFTP transfer. Sample text file for TFTP transfer.
 END NPldN87ZaL

@@ -202,8 +202,7 @@ void listen_for_packets()
                 if (src_file == NULL)
                 {
                     // if not, print a warning log message
-                    child_log(ERROR, "Error while opening transfer file. "
-                                     "Transfer Cancelled.");
+                    child_log(ERROR, "Error while opening transfer file. Transfer Cancelled.");
 
                     // send error message to the client
                     handle_file_not_found(data_sock, cli_addr);
@@ -261,14 +260,11 @@ void listen_for_packets()
                                               sizeof(cli_addr));
 
                             // check for errors
-                            check_errno(recv_len, "Error while sending data "
-                                                  "packet in text mode");
+                            check_errno(recv_len, "Error while sending data packet in text mode");
 
                             // print info log message
-                            sprintf(log_message, "Data packet with block number"
-                                                 " %04x %04x sent. Waiting "
-                                                 "to receive ACK response.",
-                                                 buffer[2], buffer[3]);
+                            sprintf(log_message, "Data packet with block number %d sent. Waiting "
+                                                 "to receive ACK response.", block_counter);
                             child_log(INFO, log_message);
 
                             // clear transfer buffer
@@ -285,10 +281,35 @@ void listen_for_packets()
                             // check for errors
                             check_errno(recv_len, "Error while receiving ACK packet.");
 
+                            // retrieve block number from transfer buffer
+                            memcpy(&block, (uint16_t*) &buffer[2], 2);
+
+                            // deserialize block number
+                            block = ntohs(block);
+
                             // print info log message
-                            sprintf(log_message, "ACK response received for "
-                                                 "block number: %04x %04x.",
-                                                 buffer[2], buffer[3]);
+                            sprintf(log_message, "ACK response received for block number: %d.", block);
+                            child_log(INFO, log_message);
+
+                            // before sending next data packet, check ack message block number
+                            if (block != block_counter)
+                            {
+                                // print a warning error log
+                                child_log(ERROR, "Sent block number and ACK packet block number do not "
+                                                 "match. Transfer cancelled.");
+
+                                // cancel tranfer, close source file
+                                fclose(src_file);
+
+                                // shutdown transfer socket
+                                shutdown(data_sock, SHUT_RDWR);
+
+                                // close transfer socket
+                                close(data_sock);
+
+                                // exit with error
+                                exit(-1);
+                            }
 
                             // reset chars counter for new transfer
                             i = 4;
@@ -312,8 +333,7 @@ void listen_for_packets()
                 if (src_file == NULL)
                 {
                     // if not, print a warning log message
-                    child_log(ERROR, "Error while opening transfer file. "
-                                     "Transfer Cancelled.");
+                    child_log(ERROR, "Error while opening transfer file. Transfer Cancelled.");
 
                     // send error message to the client
                     handle_file_not_found(data_sock, cli_addr);
@@ -368,14 +388,11 @@ void listen_for_packets()
                                               sizeof(cli_addr));
 
                             // check for errors
-                            check_errno(recv_len, "Error while sending data "
-                                                  "packet in binary mode");
+                            check_errno(recv_len, "Error while sending data packet in binary mode");
 
                             // print info log message
-                            sprintf(log_message, "Data packet with block number"
-                                                 " %04x %04x sent. Waiting "
-                                                 "to receive ACK response.",
-                                                 buffer[2], buffer[3]);
+                            sprintf(log_message, "Data packet with block number %d sent. Waiting "
+                                                 "to receive ACK response.", block_counter);
                             child_log(INFO, log_message);
 
                             // clear transfer buffer
@@ -392,11 +409,35 @@ void listen_for_packets()
                             // check for errors
                             check_errno(recv_len, "Error while receiving ACK packet.");
 
+                            // retrieve block number from transfer buffer
+                            memcpy(&block, (uint16_t*) &buffer[2], 2);
+
+                            // deserialize block number
+                            block = ntohs(block);
+
                             // print info log message
-                            sprintf(log_message, "ACK response received for "
-                                                 "block number: %04x %04x.",
-                                                 buffer[2], buffer[3]);
+                            sprintf(log_message, "ACK response received for block number: %d.", block);
                             child_log(INFO, log_message);
+
+                            // before sending next data packet, check ack message block number
+                            if (block != block_counter)
+                            {
+                                // print a warning error log
+                                child_log(ERROR, "Sent block number and ACK packet block number do not "
+                                                 "match. Transfer cancelled.");
+
+                                // cancel tranfer, close source file
+                                fclose(src_file);
+
+                                // shutdown transfer socket
+                                shutdown(data_sock, SHUT_RDWR);
+
+                                // close transfer socket
+                                close(data_sock);
+
+                                // exit with error
+                                exit(-1);
+                            }
 
                             // reset chars counter for new transfer
                             i = 4;
@@ -422,8 +463,7 @@ void listen_for_packets()
             close(data_sock);
 
             // file transfer completed, print an info log message
-            sprintf(log_message, "File %s correctly transferred to the Client.",
-                                 file_name);
+            sprintf(log_message, "File %s correctly transferred to the Client.", file_name);
             child_log(INFO, log_message);
 
             // kill child process

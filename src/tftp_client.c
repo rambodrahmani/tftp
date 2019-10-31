@@ -167,7 +167,7 @@ void get_file()
                             (socklen_t *)& addr_len);
 
     // check for errors
-    check_errno(recv_len, "receiving response after sending RRQ packet.");
+    check_errno(recv_len, "Error while receiving response after sending RRQ packet");
 
     // retrieve server response opcode
     memcpy(&opcode, (uint16_t*)&buffer, 2);
@@ -232,21 +232,13 @@ void get_file()
                                 (socklen_t *)& addr_len);
 
             // check for errors
-            check_errno(recv_len, "receiving data packets.");
+            check_errno(recv_len, "Error while receiving data packets");
 
             // retrieve block number from transfer buffer
             memcpy(&block_number, (uint16_t*) &buffer[2], 2);
 
             // deserialize block number
             block_number = ntohs(block_number);
-
-            if (recv_len != 516)
-            {
-                for(int i = 0; i < recv_len - 5; i++)
-                {
-                    fputc(buffer[i + 4], dest_file);
-                }
-			}
 
             // write received buffer to the file considering that each data packet
             // has 2 bytes opcode and 2 bytes block number
@@ -329,7 +321,7 @@ void send_RRQ(int cli_socket, char * file_name)
                           sizeof(serv_addr));
 
     // check for errors
-    check_errno(sent_len, "sending RRQ packet.");
+    check_errno(sent_len, "Error while sending RRQ packet.");
 }
 
 void send_ACK(int cli_socket, uint16_t block_number)
@@ -340,7 +332,7 @@ void send_ACK(int cli_socket, uint16_t block_number)
     // transfer buffer
     char buffer[BUFSIZE];
 
-    // opcode to be used (ACK = 4)
+    // serialize opcode to be used (ACK = 4)
     uint16_t opcode = htons(4);
 
     // copy opcode to the tranfer buffer
@@ -348,6 +340,9 @@ void send_ACK(int cli_socket, uint16_t block_number)
 
     // update transfer buffer size
     len += 2;
+
+    // serialize block number
+    block_number = htons(block_number);
 
     // copy file name to the transfer buffer
     memcpy(buffer + len, &block_number, 2);
@@ -364,7 +359,7 @@ void send_ACK(int cli_socket, uint16_t block_number)
                           sizeof(serv_addr));
 
     // check for errors
-    check_errno(sent_len, "sending ACK packet.");
+    check_errno(sent_len, "Error while sending ACK packet");
 }
 
 /**
