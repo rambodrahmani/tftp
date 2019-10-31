@@ -43,11 +43,6 @@ int server_port;
 struct sockaddr_in serv_addr;
 
 /**
- * Client Socket.
- */
-int cli_socket;
-
-/**
  * TFTP Transfer Mode.
  */
 char transfer_mode[10];
@@ -82,16 +77,18 @@ void get_file();
  * Sends the RRQ for the given file name using the provided socket. The transfer
  * mode is the one globally set using the !mode command.
  *
- * @param  sockfd     client socket file descriptor;
+ * @param  sockfd      client socket file descriptor;
+ * @param  cli_socket  the socket to be used to send the packet.
  */
-void send_RRQ(char * file_name);
+void send_RRQ(int cli_socket, char * file_name);
 
 /**
  * Sends the ACK packet for the given block number.
  *
- * @param  received  block number.
+ * @param  received   block number;
+ * @param  cli_socket the socket to be used to send the packet.
  */
-void send_ACK(uint16_t block_number);
+void send_ACK(int cli_socket, uint16_t block_number);
 
 #endif
 

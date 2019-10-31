@@ -118,8 +118,17 @@ void set_transfer_mode()
 
 void get_file()
 {
+    // fill in tftp server address struct: use IPv4 address family
+    serv_addr.sin_family = AF_INET;
+
+    // set network address
+    inet_pton(AF_INET, server_ip, &serv_addr.sin_addr);
+
+    // set network port: port numbers below 1024 are privileged ports
+    serv_addr.sin_port = htons(server_port);
+
     // create client socket descriptor
-    cli_socket = socket(AF_INET, SOCK_DGRAM, 0);
+    int cli_socket = socket(AF_INET, SOCK_DGRAM, 0);
 
     // transfer source file
     char source[256];
@@ -141,7 +150,7 @@ void get_file()
     print_log(INFO, log_message);
 
     // send RRQ request
-    send_RRQ(source);
+    send_RRQ(cli_socket, source);
 
     // TFTP Server response buffer
     char buffer[BUFSIZE];
@@ -209,7 +218,7 @@ void get_file()
         }
 
         // send ACK packet for received block
-        send_ACK(block_number);
+        send_ACK(cli_socket, block_number);
 
         // until data packets of length >= 516 are sent
         while (recv_len == 516)
@@ -248,7 +257,7 @@ void get_file()
             }
 
             // send ACK packet for received block
-            send_ACK(block_number);
+            send_ACK(cli_socket, block_number);
         }
 
         // transfer completed, shutdown socket read and write
@@ -267,7 +276,7 @@ void get_file()
    }
 }
 
-void send_RRQ(char * file_name)
+void send_RRQ(int cli_socket, char * file_name)
 {
     // final transfer buffer length
     int len = 0;
@@ -323,7 +332,7 @@ void send_RRQ(char * file_name)
     check_errno(sent_len, "sending RRQ packet.");
 }
 
-void send_ACK(uint16_t block_number)
+void send_ACK(int cli_socket, uint16_t block_number)
 {
     // file transfer buffer length
     int len = 0;
@@ -403,15 +412,6 @@ int main(int argc, char * argv[])
 
     // set defaultr transfer mode.
     strcpy(transfer_mode, "octet");
-
-    // fill in tftp server address struct: use IPv4 address family
-    serv_addr.sin_family = AF_INET;
-
-    // set network address
-    inet_pton(AF_INET, server_ip, &serv_addr.sin_addr);
-
-    // set network port: port numbers below 1024 are privileged ports
-    serv_addr.sin_port = htons(server_port);
 
     // start main loop
     main_loop();

@@ -414,6 +414,9 @@ void listen_for_packets()
             // close source file
             fclose(src_file);
 
+            // shutdown transfer socket
+            shutdown(data_sock, SHUT_RDWR);
+
             // close transfer socket
             close(data_sock);
 
