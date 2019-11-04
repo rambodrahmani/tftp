@@ -211,7 +211,8 @@ void get_file()
 
         // write received buffer to the file considering that each data packet
         // has 2 bytes opcode and 2 bytes block number
-        for (int i = 0; i < recv_len - 4; i++)
+        int i = 0;
+        for (i = 0; i < recv_len - 4; i++)
         {
             // skip opcode and block number and write
             fputc(buffer[i + 4], dest_file);
@@ -242,7 +243,8 @@ void get_file()
 
             // write received buffer to the file considering that each data packet
             // has 2 bytes opcode and 2 bytes block number
-            for (int i = 0; i < recv_len - 4; i++)
+            int i = 0;
+            for (i = 0; i < recv_len - 4; i++)
             {
                 // skip opcode and block number and write
                 fputc(buffer[i + 4], dest_file);

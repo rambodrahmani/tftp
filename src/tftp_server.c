@@ -225,7 +225,7 @@ void listen_for_packets()
                     // until the EOF is found in the opened file
                     do
                     {
-                        // retrieve next char from the file
+                        // retrieve next char from the source file
                         c = fgetc(src_file);
 
                         // copy retrieved char in the transfer buffer
@@ -262,10 +262,14 @@ void listen_for_packets()
                             // check for errors
                             check_errno(recv_len, "Error while sending data packet in text mode");
 
-                            // print info log message
-                            sprintf(log_message, "Data packet with block number %d sent. Waiting "
-                                                 "to receive ACK response.", block_counter);
-                            child_log(INFO, log_message);
+                            // if debugging is enabled
+                            if (DEBUG)
+                            {
+                                // print debugging info log message
+                                sprintf(log_message, "Data packet with block number %d sent. Waiting "
+                                                     "to receive ACK response.", block_counter);
+                                child_log(INFO, log_message);
+                            }
 
                             // clear transfer buffer
                             memset(buffer, 0, BUFSIZE);
@@ -287,9 +291,13 @@ void listen_for_packets()
                             // deserialize block number
                             block = ntohs(block);
 
-                            // print info log message
-                            sprintf(log_message, "ACK response received for block number: %d.", block);
-                            child_log(INFO, log_message);
+                            // if debugging is enabled
+                            if (DEBUG)
+                            {
+                                // print debugging info log message
+                                sprintf(log_message, "ACK response received for block number: %d.", block);
+                                child_log(INFO, log_message);
+                            }
 
                             // before sending next data packet, check ack message block number
                             if (block != block_counter)
@@ -390,10 +398,14 @@ void listen_for_packets()
                             // check for errors
                             check_errno(recv_len, "Error while sending data packet in binary mode");
 
-                            // print info log message
-                            sprintf(log_message, "Data packet with block number %d sent. Waiting "
-                                                 "to receive ACK response.", block_counter);
-                            child_log(INFO, log_message);
+                            // if debugging is enabled
+                            if (DEBUG)
+                            {
+                                // print info log message
+                                sprintf(log_message, "Data packet with block number %d sent. Waiting "
+                                                     "to receive ACK response.", block_counter);
+                                child_log(INFO, log_message);
+                            }
 
                             // clear transfer buffer
                             memset(buffer, 0, BUFSIZE);
@@ -415,9 +427,13 @@ void listen_for_packets()
                             // deserialize block number
                             block = ntohs(block);
 
-                            // print info log message
-                            sprintf(log_message, "ACK response received for block number: %d.", block);
-                            child_log(INFO, log_message);
+                            // if debugging is enabled
+                            if (DEBUG)
+                            {
+                                // print info log message
+                                sprintf(log_message, "ACK response received for block number: %d.", block);
+                                child_log(INFO, log_message);
+                            }
 
                             // before sending next data packet, check ack message block number
                             if (block != block_counter)

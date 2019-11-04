@@ -14,6 +14,11 @@
 #include <stdlib.h>
 
 /**
+ * Set this to 1 to enable debugging log messages.
+ */
+#define DEBUG 0
+
+/**
  * Maximum incoming buffer size.
  */
 #define BUFSIZE 1024
