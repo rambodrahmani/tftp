@@ -228,11 +228,15 @@ void listen_for_packets()
                         // retrieve next char from the source file
                         c = fgetc(src_file);
 
-                        // copy retrieved char in the transfer buffer
-                        buffer[i] = c;
+                        // avoid adding the EOF to the transfer buffer
+                        if (c != EOF)
+                        {
+                            // copy retrieved char in the transfer buffer
+                            buffer[i] = c;
 
-                        // increase chars counter
-                        i++;
+                            // increase chars counter
+                            i++;
+                        }
 
                         // check if either the maximum number of chars or the
                         // EOF has been reached
