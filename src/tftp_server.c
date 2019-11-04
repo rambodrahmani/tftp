@@ -372,7 +372,7 @@ void listen_for_packets()
                         dim = fread(&buffer[i], 1, 1, src_file);
 
                         // increase chars counter
-                        i++;
+                        i += dim;
 
                         // check if either the maximum number of chars or the
                         // EOF has been reached
