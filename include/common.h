@@ -19,17 +19,22 @@
 #define DEBUG 0
 
 /**
- * Maximum incoming buffer size.
+ * Maximum transfer buffer size.
  */
 #define BUFSIZE 1024
 
 /**
- * Maximum Data Packet buffer size.
+ * Maximum bytes in the Data Packet.
  */
 #define MAX 512
 
 /**
- * Available type for log messages.
+ * Char array used for formatted log messages.
+ */
+char log_message[1024];
+
+/**
+ * Available types for log messages.
  */
 typedef enum
 {

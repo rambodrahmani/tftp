@@ -12,8 +12,8 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 #include <dirent.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
@@ -21,11 +21,6 @@
 #include <netinet/in.h>
 
 #include "common.h"
-
-/**
- * Char array used for formatted log messages.
- */
-char log_message[1024];
 
 /**
  * TFTP Server IP Address.

@@ -23,11 +23,6 @@
 #include "common.h"
 
 /**
- * Char array used for formatted log messages.
- */
-char log_message[1024];
-
-/**
  * TFTP Server Base Directory.
  */
 char *base_dir;
