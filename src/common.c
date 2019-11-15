@@ -52,8 +52,6 @@ void child_log(LogType type, const char *message)
 
 void check_errno(int ret, char * info)
 {
-    char log_message[1024];
-
     // check for errors
     if (ret <= 0)
     {

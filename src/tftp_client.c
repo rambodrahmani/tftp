@@ -10,16 +10,16 @@
 
 void main_loop()
 {
-    // input command
+    // input command buffer
     char command[1024];
 
-    // print help menu
+    // print help menu when the client starts
     print_help_menu();
 
-    // infinite loop
+    // infinite execution loop
     while (1)
     {
-        // read command from stdin
+        // read command from stdin scanning 1023 chars
         scanf("%1023s", command);
 
         if (strncmp(command, "!help", 5) == 0)          // HELP
@@ -41,7 +41,7 @@ void main_loop()
             // retrieve get parameters and transfer file
             get_file();
 
-            // print promp char and wait for a new command
+            // print prompt char and wait for a new command
             print_prompt();
         }
         else if (strncmp(command, "!quit", 5) == 0)      // QUIT
@@ -57,7 +57,7 @@ void main_loop()
             // print a warning error message
             print_log(ERROR, "Invalid command.");
 
-            // print the prompt char and wait for a new command
+            // print prompt char and wait for a new command
             print_prompt();
         }
     }
@@ -374,10 +374,10 @@ void send_ACK(int cli_socket, uint16_t block_number)
  */
 int main(int argc, char * argv[])
 {
-    // check if 3 arguments were not provided
+    // check if 2 arguments were provided
     if (argc != 3)
     {
-        // if so, print a warning error message
+        // if not, print a warning error message
         print_log(ERROR, "Invalid number of arguments."
                          " Usage: tftp_client <server ip> <server port>."
                          " Quitting.");
@@ -407,7 +407,7 @@ int main(int argc, char * argv[])
         }
     }
 
-    // set defaultr transfer mode.
+    // set default transfer mode.
     strcpy(transfer_mode, "octet");
 
     // start main loop
