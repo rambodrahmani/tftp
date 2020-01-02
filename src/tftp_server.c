@@ -134,7 +134,8 @@ void listen_for_packets()
 		print_log(INFO, log_message);
 
 		// the only valid opcode at this point is 1 (RRQ)
-		if (opcode != 1) {
+		if (opcode != 1)
+		{
 			// print a warning error message
 			sprintf(log_message, "Received invalid opcode: %d.",
 				opcode);
@@ -143,6 +144,7 @@ void listen_for_packets()
 			// handle invalid opcode received
 			handle_invalid_opcode(cli_addr);
 		}
+
 		// requested file full path
 		char *path = malloc(strlen(base_dir) + strlen(file_name) + 1);
 
@@ -152,9 +154,12 @@ void listen_for_packets()
 		strcat(path, file_name);
 
 		// check if the file actually exists
-		if (access(path, F_OK) != -1) {
+		if (access(path, F_OK) != -1)
+		{
 			// file exists, nothing to do
-		} else {
+		}
+		else
+		{
 			// file doesn't exist, print an error log message
 			sprintf(log_message,
 				"Unable to open the requested file: %s.", path);
@@ -175,383 +180,397 @@ void listen_for_packets()
 		// parent, no child process is created, and errno is set appropriately
 		if (fork_id == 0)	// child process
 		{
-			// clear the buffer
-			memset(buffer, 0, BUFSIZE);
-
-			// new socket to be used to send data packets
-			int data_sock = socket(AF_INET, SOCK_DGRAM, 0);
-
-			// check if the socket was correctl created
-			check_errno(data_sock,
-				    "Error while creating child process socket");
-
-			// source file pointer
-			FILE *src_file;
-
-			// check requested transfer mode
-			if (strncmp(mode, "netascii", 8) == 0)	// TEXT MODE
-			{
-				// print an info log message
-				child_log(INFO,
-					  "Starting File Transfer in TEXT mode.");
-
-				// open file as text file
-				src_file = fopen(path, "r");
-
-				// check if the file was correctly opened
-				if (src_file == NULL) {
-					// if not, print a warning log message
-					child_log(ERROR,
-						  "Error while opening transfer file. Transfer Cancelled.");
-
-					// send error message to the client
-					handle_file_not_found(data_sock,
-							      cli_addr);
-
-					// loop again
-					continue;
-				} else {
-					// single char store
-					char c;
-
-					// chars counter: the first 4 bytes of the transfer buffer
-					// must be left empty for the opcode and block number
-					int i = 4;
-
-					// data transfer blocks counter
-					uint16_t block_counter = 1;
-
-					// until the EOF is found in the opened file
-					do {
-						// retrieve next char from the source file
-						c = fgetc(src_file);
-
-						// avoid adding the EOF to the transfer buffer
-						if (c != EOF) {
-							// copy retrieved char in the transfer buffer
-							buffer[i] = c;
-
-							// increase chars counter
-							i++;
-						}
-						// check if either the maximum number of chars or the
-						// EOF has been reached
-						if (i == MAX + 4 || c == EOF) {
-							// if so, send the message to the client
-							// opcode = 3 (= DATA)
-							opcode = htons(3);
-
-							// set block number
-							uint16_t block =
-							    htons
-							    (block_counter);
-
-							// copy opcode to the transfer buffer
-							memcpy(buffer, &opcode,
-							       2);
-
-							// copy block_number to the transfer buffer
-							memcpy(buffer + 2,
-							       &block, 2);
-
-							// send transfer buffer to the client
-							recv_len =
-							    sendto(data_sock,
-								   buffer, i,
-								   MSG_CONFIRM,
-								   (const struct
-								    sockaddr *)
-								   &cli_addr,
-								   sizeof
-								   (cli_addr));
-
-							// check for errors
-							check_errno(recv_len,
-								    "Error while sending data packet in text mode");
-
-							// if debugging is enabled
-							if (DEBUG) {
-								// print debugging info log message
-								sprintf
-								    (log_message,
-								     "Data packet with block number %d sent. Waiting "
-								     "to receive ACK response.",
-								     block_counter);
-								child_log(INFO,
-									  log_message);
-							}
-							// clear transfer buffer
-							memset(buffer, 0,
-							       BUFSIZE);
-
-							// wait for ACK response from the client
-							recv_len =
-							    recvfrom(data_sock,
-								     (char *)
-								     buffer,
-								     BUFSIZE,
-								     MSG_WAITALL,
-								     (struct
-								      sockaddr
-								      *)
-								     &cli_addr,
-								     (socklen_t
-								      *) &
-								     cli_size);
-
-							// check for errors
-							check_errno(recv_len,
-								    "Error while receiving ACK packet.");
-
-							// retrieve block number from transfer buffer
-							memcpy(&block,
-							       (uint16_t *) &
-							       buffer[2], 2);
-
-							// deserialize block number
-							block = ntohs(block);
-
-							// if debugging is enabled
-							if (DEBUG) {
-								// print debugging info log message
-								sprintf
-								    (log_message,
-								     "ACK response received for block number: %d.",
-								     block);
-								child_log(INFO,
-									  log_message);
-							}
-							// before sending next data packet, check ack message block number
-							if (block !=
-							    block_counter) {
-								// print a warning error log
-								child_log(ERROR,
-									  "Sent block number and ACK packet block number do not "
-									  "match. Transfer cancelled.");
-
-								// cancel tranfer, close source file
-								fclose
-								    (src_file);
-
-								// shutdown transfer socket
-								shutdown
-								    (data_sock,
-								     SHUT_RDWR);
-
-								// close transfer socket
-								close
-								    (data_sock);
-
-								// exit with error
-								exit(-1);
-							}
-							// reset chars counter for new transfer
-							i = 4;
-
-							// increase block number counter
-							block_counter++;
-						}
-					}
-					while (c != EOF);
-				}
-			} else if (strncmp(mode, "octet", 5) == 0)	// BINARY MODE
-			{
-				// print an info log message
-				child_log(INFO,
-					  "Starting File Transfer in BINARY mode.");
-
-				// open file as non-text file
-				src_file = fopen(path, "rb");
-
-				// check if the file was correctly opened
-				if (src_file == NULL) {
-					// if not, print a warning log message
-					child_log(ERROR,
-						  "Error while opening transfer file. Transfer Cancelled.");
-
-					// send error message to the client
-					handle_file_not_found(data_sock,
-							      cli_addr);
-
-					// loop again
-					continue;
-				} else {
-					// size in bytes of the data read from the file
-					size_t dim = 0;
-
-					// chars counter: the first 4 bytes of the transfer buffer
-					// must be left empty for the opcode and block number
-					int i = 4;
-
-					// data transfer blocks counter
-					uint16_t block_counter = 1;
-
-					// until the EOF is found in the opened file
-					do {
-						// retrieve next char from the file
-						dim =
-						    fread(&buffer[i], 1, 1,
-							  src_file);
-
-						// increase chars counter
-						i += dim;
-
-						// check if either the maximum number of chars or the
-						// EOF has been reached
-						if (i == MAX + 4 || dim != 1) {
-							// if so, send the message to the client
-							// opcode = 3 (= DATA)
-							opcode = htons(3);
-
-							// set block number
-							uint16_t block =
-							    htons
-							    (block_counter);
-
-							// copy opcode to the transfer buffer
-							memcpy(buffer, &opcode,
-							       2);
-
-							// copy block_number to the transfer buffer
-							memcpy(buffer + 2,
-							       &block, 2);
-
-							// send transfer buffer to the client
-							recv_len =
-							    sendto(data_sock,
-								   buffer, i,
-								   MSG_CONFIRM,
-								   (const struct
-								    sockaddr *)
-								   &cli_addr,
-								   sizeof
-								   (cli_addr));
-
-							// check for errors
-							check_errno(recv_len,
-								    "Error while sending data packet in binary mode");
-
-							// if debugging is enabled
-							if (DEBUG) {
-								// print info log message
-								sprintf
-								    (log_message,
-								     "Data packet with block number %d sent. Waiting "
-								     "to receive ACK response.",
-								     block_counter);
-								child_log(INFO,
-									  log_message);
-							}
-							// clear transfer buffer
-							memset(buffer, 0,
-							       BUFSIZE);
-
-							// wait for ACK response from the client
-							recv_len =
-							    recvfrom(data_sock,
-								     (char *)
-								     buffer,
-								     BUFSIZE,
-								     MSG_WAITALL,
-								     (struct
-								      sockaddr
-								      *)
-								     &cli_addr,
-								     (socklen_t
-								      *) &
-								     cli_size);
-
-							// check for errors
-							check_errno(recv_len,
-								    "Error while receiving ACK packet.");
-
-							// retrieve block number from transfer buffer
-							memcpy(&block,
-							       (uint16_t *) &
-							       buffer[2], 2);
-
-							// deserialize block number
-							block = ntohs(block);
-
-							// if debugging is enabled
-							if (DEBUG) {
-								// print info log message
-								sprintf
-								    (log_message,
-								     "ACK response received for block number: %d.",
-								     block);
-								child_log(INFO,
-									  log_message);
-							}
-							// before sending next data packet, check ack message block number
-							if (block !=
-							    block_counter) {
-								// print a warning error log
-								child_log(ERROR,
-									  "Sent block number and ACK packet block number do not "
-									  "match. Transfer cancelled.");
-
-								// cancel tranfer, close source file
-								fclose
-								    (src_file);
-
-								// shutdown transfer socket
-								shutdown
-								    (data_sock,
-								     SHUT_RDWR);
-
-								// close transfer socket
-								close
-								    (data_sock);
-
-								// exit with error
-								exit(-1);
-							}
-							// reset chars counter for new transfer
-							i = 4;
-
-							// increase block number counter
-							block_counter++;
-						}
-					}
-					while (dim == 1);
-				}
-			}
-			// file transfer complted, clear transfer buffer
-			memset(buffer, 0, BUFSIZE);
-
-			// close source file
-			fclose(src_file);
-
-			// shutdown transfer socket
-			shutdown(data_sock, SHUT_RDWR);
-
-			// close transfer socket
-			close(data_sock);
-
-			// file transfer completed, print an info log message
-			sprintf(log_message,
-				"File %s correctly transferred to the Client.",
-				file_name);
-			child_log(INFO, log_message);
-
-			// kill child process
-			exit(0);
-		} else if (fork_id > 0)	// parent process
+			handle_transfer(mode, cli_addr, file_name);
+		}
+		else if (fork_id > 0)	// parent process
 		{
 			// just clear the buffer before looping again
 			memset(buffer, 0, BUFSIZE);
-		} else if (fork_id < 0)	// fork() error
+		}
+		else if (fork_id < 0)	// fork() error
 		{
 			// print a warning error log message
 			print_log(ERROR,
-				  "Error while creating child process for client."
-				  " Quitting.");
+				  "Error while creating child process for "
+				  "client. Quitting.");
 
 			// exit wirh error
 			exit(-1);
 		}
 	}
+}
+
+void handle_transfer(char mode[10], struct sockaddr cli_addr,
+		     char file_name[512])
+{
+	// requested file full path
+	char *path = malloc(strlen(base_dir) + strlen(file_name) + 1);
+
+	// incoming message buffer
+	char buffer[BUFSIZE];
+
+	// clear the buffer
+	memset(buffer, 0, BUFSIZE);
+
+	// new socket to be used to send data packets
+	int data_sock = socket(AF_INET, SOCK_DGRAM, 0);
+
+	// check if the socket was correctl created
+	check_errno(data_sock, "Error while creating child process socket");
+
+	// source file pointer
+	FILE *src_file;
+
+	// check requested transfer mode
+	if (strncmp(mode, "netascii", 8) == 0)	// TEXT MODE
+	{
+		// print an info log message
+		child_log(INFO, "Starting File Transfer in TEXT mode.");
+
+		// open file as text file
+		src_file = fopen(path, "r");
+
+		// check if the file was correctly opened
+		if (src_file == NULL)
+		{
+			// if not, print a warning log message
+			child_log(ERROR,
+				  "Error while opening transfer file. Transfer Cancelled.");
+
+			// send error message to the client
+			handle_file_not_found(data_sock, cli_addr);
+
+			// loop again
+			return;
+		}
+		else
+		{
+			text_mode_transfer(src_file, data_sock, cli_addr);
+		}
+	}
+	else if (strncmp(mode, "octet", 5) == 0)	// BINARY MODE
+	{
+		// print an info log message
+		child_log(INFO, "Starting File Transfer in BINARY mode.");
+
+		// open file as non-text file
+		src_file = fopen(path, "rb");
+
+		// check if the file was correctly opened
+		if (src_file == NULL) {
+			// if not, print a warning log message
+			child_log(ERROR,
+				  "Error while opening transfer file. Transfer Cancelled.");
+
+			// send error message to the client
+			handle_file_not_found(data_sock, cli_addr);
+
+			// loop again
+			return;
+		}
+		else
+		{
+			binary_mode_transfer(src_file, data_sock, cli_addr);
+		}
+	}
+
+	// file transfer complted, clear transfer buffer
+	memset(buffer, 0, BUFSIZE);
+
+	// close source file
+	fclose(src_file);
+
+	// shutdown transfer socket
+	shutdown(data_sock, SHUT_RDWR);
+
+	// close transfer socket
+	close(data_sock);
+
+	// file transfer completed, print an info log message
+	sprintf(log_message,
+		"File %s correctly transferred to the Client.", file_name);
+	child_log(INFO, log_message);
+
+	// kill child process
+	exit(0);
+}
+
+void text_mode_transfer(FILE * src_file, int data_sock,
+			struct sockaddr cli_addr)
+{
+	// incoming message buffer
+	char buffer[BUFSIZE];
+
+	// message opcode
+	uint16_t opcode;
+
+	// received message length
+	int recv_len;
+
+	// client address length
+	size_t cli_size = sizeof(cli_addr);
+
+	// single char store
+	char c;
+
+	// chars counter: the first 4 bytes of the transfer buffer
+	// must be left empty for the opcode and block number
+	int i = 4;
+
+	// data transfer blocks counter
+	uint16_t block_counter = 1;
+
+	// until the EOF is found in the opened file
+	do {
+		// retrieve next char from the source file
+		c = fgetc(src_file);
+
+		// avoid adding the EOF to the transfer buffer
+		if (c != EOF)
+		{
+			// copy retrieved char in the transfer buffer
+			buffer[i] = c;
+
+			// increase chars counter
+			i++;
+		}
+
+		// check if either the maximum number of chars or the
+		// EOF has been reached
+		if (i == MAX + 4 || c == EOF)
+		{
+			// if so, send the message to the client
+			// opcode = 3 (= DATA)
+			opcode = htons(3);
+
+			// set block number
+			uint16_t block = htons(block_counter);
+
+			// copy opcode to the transfer buffer
+			memcpy(buffer, &opcode, 2);
+
+			// copy block_number to the transfer buffer
+			memcpy(buffer + 2, &block, 2);
+
+			// send transfer buffer to the client
+			recv_len =
+			    sendto(data_sock,
+				   buffer, i,
+				   MSG_CONFIRM, (const struct sockaddr *)
+				   &cli_addr, sizeof(cli_addr));
+
+			// check for errors
+			check_errno(recv_len,
+				    "Error while sending data packet in text mode");
+
+			// if debugging is enabled
+			if (DEBUG)
+			{
+				// print debugging info log message
+				sprintf
+				    (log_message,
+				     "Data packet with block number %d sent. Waiting "
+				     "to receive ACK response.", block_counter);
+				child_log(INFO, log_message);
+			}
+
+			// clear transfer buffer
+			memset(buffer, 0, BUFSIZE);
+
+			// wait for ACK response from the client
+			recv_len = recvfrom(data_sock, (char *)
+					    buffer,
+					    BUFSIZE,
+					    MSG_WAITALL, (struct sockaddr *)
+					    &cli_addr,
+					    (socklen_t *) & cli_size);
+
+			// check for errors
+			check_errno(recv_len,
+				    "Error while receiving ACK packet.");
+
+			// retrieve block number from transfer buffer
+			memcpy(&block, (uint16_t *) & buffer[2], 2);
+
+			// deserialize block number
+			block = ntohs(block);
+
+			// if debugging is enabled
+			if (DEBUG)
+			{
+				// print debugging info log message
+				sprintf
+				    (log_message,
+				     "ACK response received for block number: %d.",
+				     block);
+				child_log(INFO, log_message);
+			}
+
+			// before sending next data packet, check ack message block number
+			if (block != block_counter)
+			{
+				// print a warning error log
+				child_log(ERROR,
+					  "Sent block number and ACK packet block number do not "
+					  "match. Transfer cancelled.");
+
+				// cancel tranfer, close source file
+				fclose(src_file);
+
+				// shutdown transfer socket
+				shutdown(data_sock, SHUT_RDWR);
+
+				// close transfer socket
+				close(data_sock);
+
+				// exit with error
+				exit(-1);
+			}
+
+			// reset chars counter for new transfer
+			i = 4;
+
+			// increase block number counter
+			block_counter++;
+		}
+	}
+	while (c != EOF);
+}
+
+void binary_mode_transfer(FILE * src_file, int data_sock,
+			  struct sockaddr cli_addr)
+{
+	// incoming message buffer
+	char buffer[BUFSIZE];
+
+	// message opcode
+	uint16_t opcode;
+
+	// received message length
+	int recv_len;
+
+	// client address length
+	size_t cli_size = sizeof(cli_addr);
+
+	// size in bytes of the data read from the file
+	size_t dim = 0;
+
+	// chars counter: the first 4 bytes of the transfer buffer
+	// must be left empty for the opcode and block number
+	int i = 4;
+
+	// data transfer blocks counter
+	uint16_t block_counter = 1;
+
+	// until the EOF is found in the opened file
+	do {
+		// retrieve next char from the file
+		dim = fread(&buffer[i], 1, 1, src_file);
+
+		// increase chars counter
+		i += dim;
+
+		// check if either the maximum number of chars or the
+		// EOF has been reached
+		if (i == MAX + 4 || dim != 1)
+		{
+			// if so, send the message to the client
+			// opcode = 3 (= DATA)
+			opcode = htons(3);
+
+			// set block number
+			uint16_t block = htons(block_counter);
+
+			// copy opcode to the transfer buffer
+			memcpy(buffer, &opcode, 2);
+
+			// copy block_number to the transfer buffer
+			memcpy(buffer + 2, &block, 2);
+
+			// send transfer buffer to the client
+			recv_len =
+			    sendto(data_sock,
+				   buffer, i,
+				   MSG_CONFIRM, (const struct sockaddr *)
+				   &cli_addr, sizeof(cli_addr));
+
+			// check for errors
+			check_errno(recv_len,
+				    "Error while sending data packet in binary mode");
+
+			// if debugging is enabled
+			if (DEBUG)
+			{
+				// print info log message
+				sprintf
+				    (log_message,
+				     "Data packet with block number %d sent. Waiting "
+				     "to receive ACK response.", block_counter);
+				child_log(INFO, log_message);
+			}
+
+			// clear transfer buffer
+			memset(buffer, 0, BUFSIZE);
+
+			// wait for ACK response from the client
+			recv_len = recvfrom(data_sock, (char *)
+					    buffer,
+					    BUFSIZE,
+					    MSG_WAITALL, (struct sockaddr *)
+					    &cli_addr,
+					    (socklen_t *) & cli_size);
+
+			// check for errors
+			check_errno(recv_len,
+				    "Error while receiving ACK packet.");
+
+			// retrieve block number from transfer buffer
+			memcpy(&block, (uint16_t *) & buffer[2], 2);
+
+			// deserialize block number
+			block = ntohs(block);
+
+			// if debugging is enabled
+			if (DEBUG)
+			{
+				// print info log message
+				sprintf
+				    (log_message,
+				     "ACK response received for block number: %d.",
+				     block);
+				child_log(INFO, log_message);
+			}
+
+			// before sending next data packet, check ack message block number
+			if (block != block_counter)
+			{
+				// print a warning error log
+				child_log(ERROR,
+					  "Sent block number and ACK packet block number do not "
+					  "match. Transfer cancelled.");
+
+				// cancel tranfer, close source file
+				fclose(src_file);
+
+				// shutdown transfer socket
+				shutdown(data_sock, SHUT_RDWR);
+
+				// close transfer socket
+				close(data_sock);
+
+				// exit with error
+				exit(-1);
+			}
+
+			// reset chars counter for new transfer
+			i = 4;
+
+			// increase block number counter
+			block_counter++;
+		}
+	}
+	while (dim == 1);
+
 }
 
 void handle_invalid_opcode(struct sockaddr cli_addr)
@@ -595,8 +614,7 @@ void handle_invalid_opcode(struct sockaddr cli_addr)
 			      sizeof(cli_addr));
 
 	// check for errors
-	check_errno(sent_len,
-		    "Error while sending invalid opcode error message");
+	check_errno(sent_len, "Error while sending invalid opcode error message");
 
 	// error message correctly sent
 	print_log(INFO, "Error message correctly sent.");
@@ -643,8 +661,7 @@ void handle_file_not_found(int socket, struct sockaddr cli_addr)
 			      sizeof(cli_addr));
 
 	// check for errors
-	check_errno(sent_len,
-		    "Error while sending file not found error message");
+	check_errno(sent_len, "Error while sending file not found error message");
 
 	// error message correctly sent
 	print_log(INFO, "Error message correctly sent.");
@@ -662,7 +679,8 @@ int main(int argc, char *argv[])
 {
 	// check if the port and base directory arguments were provided
 	if (argc != 3) {
-		print_log(ERROR, "Invalid number of arguments. "
+		print_log(ERROR,
+			  "Invalid number of arguments. "
 			  "Usage: tftp_server <port> <base directory>. "
 			  "Quitting.");
 
@@ -687,7 +705,8 @@ int main(int argc, char *argv[])
 
 	// check if the given directory path is valid
 	DIR *dir = opendir(argv[2]);
-	if (dir) {
+	if (dir)
+	{
 		// directory correctly opened, it exists, just close it
 		closedir(dir);
 
@@ -717,14 +736,15 @@ int main(int argc, char *argv[])
 	listener = createUDPSocket(port);
 
 	// check if the listener socket was correctly created
-	if (listener < 0) {
+	if (listener < 0)
+	{
 		// if not, print a warning log message
-		print_log(ERROR,
-			  "Error while creating listener socket. Quitting.");
+		print_log(ERROR, "Error while creating listener socket. Quitting.");
 
 		// return with errors
 		return -1;
 	}
+
 	// start main loop
 	listen_for_packets();
 

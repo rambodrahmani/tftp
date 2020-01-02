@@ -49,6 +49,21 @@ int createUDPSocket(int port);
 void listen_for_packets();
 
 /**
+ *
+ */
+void handle_transfer(char mode[10], struct sockaddr cli_addr, char file_name[512]);
+
+/**
+ *
+ */
+void text_mode_transfer(FILE *src_file, int socket, struct sockaddr cli_addr);
+
+/**
+ *
+ */
+void binary_mode_transfer(FILE *src_file, int socket, struct sockaddr cli_addr);
+
+/**
  * Handles invalid opcodes received from the TFTP Client. An error message
  * (opcode = 5) is sent to the client for illegal TFTP operation (error code =
  * 4).
