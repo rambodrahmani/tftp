@@ -274,7 +274,7 @@ void handle_transfer(char mode[10], struct sockaddr cli_addr,
 		}
 	}
 
-	// file transfer complted, clear transfer buffer
+	// file transfer completed, clear transfer buffer
 	memset(buffer, 0, BUFSIZE);
 
 	// close source file
@@ -286,7 +286,7 @@ void handle_transfer(char mode[10], struct sockaddr cli_addr,
 	// close transfer socket
 	close(data_sock);
 
-	// file transfer completed, print an info log message
+	// notify file transfer completed with log message
 	sprintf(log_message,
 		"File %s correctly transferred to the Client.", file_name);
 	child_log(INFO, log_message);
@@ -310,7 +310,7 @@ void text_mode_transfer(FILE * src_file, int data_sock,
 	// client address length
 	size_t cli_size = sizeof(cli_addr);
 
-	// single char store
+	// single char store buffer
 	char c;
 
 	// chars counter: the first 4 bytes of the transfer buffer
@@ -339,11 +339,11 @@ void text_mode_transfer(FILE * src_file, int data_sock,
 		// EOF has been reached
 		if (i == MAX + 4 || c == EOF)
 		{
-			// if so, send the message to the client
+			// if so, send the data message to the client
 			// opcode = 3 (= DATA)
 			opcode = htons(3);
 
-			// set block number
+			// prepare block number
 			uint16_t block = htons(block_counter);
 
 			// copy opcode to the transfer buffer
@@ -355,9 +355,11 @@ void text_mode_transfer(FILE * src_file, int data_sock,
 			// send transfer buffer to the client
 			recv_len =
 			    sendto(data_sock,
-				   buffer, i,
-				   MSG_CONFIRM, (const struct sockaddr *)
-				   &cli_addr, sizeof(cli_addr));
+				   buffer,
+				   i,
+				   MSG_CONFIRM,
+				   (const struct sockaddr *) &cli_addr,
+				   sizeof(cli_addr));
 
 			// check for errors
 			check_errno(recv_len,
@@ -406,7 +408,7 @@ void text_mode_transfer(FILE * src_file, int data_sock,
 				child_log(INFO, log_message);
 			}
 
-			// before sending next data packet, check ack message block number
+			// before sending next data message, check ack message block number
 			if (block != block_counter)
 			{
 				// print a warning error log
