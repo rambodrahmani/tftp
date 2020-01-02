@@ -673,7 +673,7 @@ void handle_file_not_found(int socket, struct sockaddr cli_addr)
  * @param  argc  command line arguments counter.
  * @param  argv  command line arguments.
  *
- * @return       execution exit code.
+ * @return  execution exit code.
  */
 int main(int argc, char *argv[])
 {

@@ -54,13 +54,15 @@ void check_errno(int ret, char *info)
 {
 	if (ret <= 0)
 	{
+		// prepare formatted log message
 		sprintf(log_message,
 			"An unexpected error happened: info = %s; errno = "
 			"%d", info, errno);
 
+		// write log message to STDOUT
 		print_log(ERROR, log_message);
 
+		// terminate with error
 		exit(-1);
 	}
 }
-
