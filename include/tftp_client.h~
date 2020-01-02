@@ -33,14 +33,14 @@ char *server_ip;
 int server_port;
 
 /**
- * TFTP Transfer Mode.
- */
-char transfer_mode[10];
-
-/**
  * TFTP Server Address Struct.
  */
 struct sockaddr_in serv_addr;
+
+/**
+ * TFTP Transfer Mode.
+ */
+char transfer_mode[10];
 
 /**
  * Implements the execution main loop.
@@ -53,7 +53,7 @@ void main_loop();
 void print_help_menu();
 
 /**
- * Prints the prompt character to the STDOUT on a new line.
+ * Prints the prompt character on a new line.
  */
 void print_prompt();
 
@@ -69,20 +69,21 @@ void set_transfer_mode();
 void get_file();
 
 /**
- * Sends the RRQ for the given file name using the provided socket. The
- * transfer mode is the one globally set using the !mode command.
+ * Sends the RRQ for the given file name using the provided socket. The transfer
+ * mode is the one globally set using the !mode command.
  *
  * @param  sockfd      client socket file descriptor;
  * @param  cli_socket  the socket to be used to send the packet.
  */
-void send_RRQ(int cli_socket, char *file_name);
+void send_RRQ(int cli_socket, char * file_name);
 
 /**
  * Sends the ACK packet for the given block number.
  *
- * @param  received    block number;
- * @param  cli_socket  the socket to be used to send the packet.
+ * @param  received   block number;
+ * @param  cli_socket the socket to be used to send the packet.
  */
 void send_ACK(int cli_socket, uint16_t block_number);
 
 #endif
+

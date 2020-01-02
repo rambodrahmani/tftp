@@ -1,6 +1,6 @@
 /**
  * File: common.h
- *       Common functions and data structures for the Server and the Client.
+ *       Common Header File.
  * 
  * Author: Rambod Rahmani <rambodrahmani@autistici.org>
  *         Created on 24/10/2019.
@@ -24,7 +24,7 @@
 #define BUFSIZE 1024
 
 /**
- * Maximum bytes in the Data message.
+ * Maximum bytes in the Data Packet.
  */
 #define MAX 512
 
@@ -36,29 +36,30 @@ char log_message[1024];
 /**
  * Available types for log messages.
  */
-typedef enum {
-	INFO,		// info log message
-	ERROR		// error log message
+typedef enum
+{
+    INFO,       // info log message
+    ERROR       // error log message
 } LogType;
 
 /**
- * Prints a log message having the given type with the given text message.
- * Based on the given type, a different output stream is used. The new line
- * character is automatically added after the log message.
+ * Prints a log message having the given type with the given text message. Based
+ * on the given type, a different output stream is used. The new line character
+ * is automatically added after the log message.
  *
  * @param  type     the type of the log message;
  * @param  message  the text of the log message.
  */
-void print_log(LogType type, const char *message);
+void print_log(LogType type, const char * message);
 
 /**
- * Custom logging method for child processes log messages in order to be able
- * to distinguish them from the parent process.
+ * Custom logging method for child processes log messages in order to be able to
+ * distinguish them from the parent process.
  *
  * @param  type     the type of the log message;
  * @param  message  the text of the log message.
  */
-void child_log(LogType type, const char *message);
+void child_log(LogType type, const char * message);
 
 /**
  * Checks for transfer errors and eventually prints the content of errno.
@@ -66,6 +67,7 @@ void child_log(LogType type, const char *message);
  * @param  ret   transfer result;
  * @param  info  string containing additional human readable info.
  */
-void check_errno(int ret, char *info);
+void check_errno(int ret, char * info);
 
 #endif
+
