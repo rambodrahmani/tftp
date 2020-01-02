@@ -206,6 +206,11 @@ void handle_transfer(char mode[10], struct sockaddr cli_addr,
 	// requested file full path
 	char *path = malloc(strlen(base_dir) + strlen(file_name) + 1);
 
+	// set requested file full path
+	strcpy(path, base_dir);
+	strcat(path, "/");
+	strcat(path, file_name);
+
 	// incoming message buffer
 	char buffer[BUFSIZE];
 
@@ -730,20 +735,15 @@ int main(int argc, char *argv[])
 		print_log(ERROR,
 			  "An unexpected error happened while opening the "
 			  "provided directory. Quitting.");
+
+		return -1;
 	}
 
 	// create listener UDP server
 	listener = createUDPSocket(port);
 
 	// check if the listener socket was correctly created
-	if (listener < 0)
-	{
-		// if not, print a warning log message
-		print_log(ERROR, "Error while creating listener socket. Quitting.");
-
-		// return with errors
-		return -1;
-	}
+	check_errno(listener, "Error while creating listener socket. Quitting.");
 
 	// start main loop
 	listen_for_packets();
