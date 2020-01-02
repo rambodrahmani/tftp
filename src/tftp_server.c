@@ -44,13 +44,8 @@ int createUDPSocket(int port)
 	    bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
 
 	// check if the socket bound succeeded
-	if (bound < 0) {
-		// print a warning log message
-		print_log(ERROR, "Error while binding listener UDP Socket");
+	check_errno(bound, "Error while binding listener UDP Socket");
 
-		// return with error
-		return -1;
-	}
 	// server socket successfully started, print connection parameters
 	print_log(INFO, "TFTP Server successfully started.");
 
@@ -59,7 +54,7 @@ int createUDPSocket(int port)
 	inet_ntop(serv_addr.sin_family, (void *)&serv_addr.sin_addr, ip,
 		  sizeof(ip));
 
-	// prepare log message string
+	// prepare and print log message string
 	sprintf(log_message, "Server IP: %s", ip);
 	print_log(INFO, log_message);
 
@@ -112,7 +107,7 @@ void listen_for_packets()
 		// recieve the data
 		recv_len =
 		    recvfrom(listener, (char *)buffer, BUFSIZE, MSG_WAITALL,
-			     &cli_addr, (socklen_t *) & cli_size);
+			     &cli_addr, (socklen_t *) &cli_size);
 
 		// check for errors
 		check_errno(recv_len, "Error while listening for packets");
@@ -127,7 +122,7 @@ void listen_for_packets()
 		// retrieve transfer mode
 		strcpy(mode, buffer + 3 + strlen(file_name));
 
-		// log received message info
+		// log info of the received message
 		sprintf(log_message,
 			"Received opcode: %d, file name: %s and mode: %s.",
 			opcode, file_name, mode);
@@ -148,7 +143,7 @@ void listen_for_packets()
 		// requested file full path
 		char *path = malloc(strlen(base_dir) + strlen(file_name) + 1);
 
-		// set requested file full path
+		// setup requested file full path
 		strcpy(path, base_dir);
 		strcat(path, "/");
 		strcat(path, file_name);
@@ -220,7 +215,7 @@ void handle_transfer(char mode[10], struct sockaddr cli_addr,
 	// new socket to be used to send data packets
 	int data_sock = socket(AF_INET, SOCK_DGRAM, 0);
 
-	// check if the socket was correctl created
+	// check if the socket was correctly created
 	check_errno(data_sock, "Error while creating child process socket");
 
 	// source file pointer

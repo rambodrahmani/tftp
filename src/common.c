@@ -52,7 +52,7 @@ void child_log(LogType type, const char *message)
 
 void check_errno(int ret, char *info)
 {
-	if (ret <= 0)
+	if (ret < 0)
 	{
 		// prepare formatted log message
 		sprintf(log_message,

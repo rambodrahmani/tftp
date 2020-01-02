@@ -61,7 +61,8 @@ void print_log(LogType type, const char *message);
 void child_log(LogType type, const char *message);
 
 /**
- * Checks for transfer errors and eventually prints the content of errno.
+ * Checks for transfer errors and eventually prints the content of errno. In
+ * case of error the process is terminated.
  *
  * @param  ret   transfer result;
  * @param  info  string containing additional human readable info.
