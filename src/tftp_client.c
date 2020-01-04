@@ -150,11 +150,13 @@ void get_file()
 	opcode = ntohs(opcode);
 
 	// check the opcode for error messages
-	if (opcode == 5) {
+	if (opcode == 5)
+	{
 		// error message opcode found, print a warning error log
 		sprintf(log_message, "Error: %s.", buffer + 2);
 		print_log(ERROR, log_message);
-	} else if (opcode == 3)	// check the opcode for data messages
+	}
+	else if (opcode == 3)	// check the opcode for data messages
 	{
 		// block number
 		uint16_t block_number;
@@ -172,7 +174,8 @@ void get_file()
 		FILE *dest_file = fopen(dest, "w");
 
 		// check if the file was correctly opened
-		if (dest_file == NULL) {
+		if (dest_file == NULL)
+		{
 			// if not, print a warning error log
 			sprintf(log_message,
 				"Error while opening the destination file: "
@@ -182,6 +185,7 @@ void get_file()
 			// exit with error
 			exit(-1);
 		}
+
 		// write received buffer to the file considering that each data packet
 		// has 2 bytes opcode and 2 bytes block number
 		int i = 0;
